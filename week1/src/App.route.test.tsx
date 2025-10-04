@@ -1,14 +1,23 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import App from './App'
+import { MemoryRouter } from 'react-router-dom'
 
 test('default route renders dashboard', () => {
-  render(<App />)
+  render(
+    <MemoryRouter initialEntries={['/']}>
+      <App />
+    </MemoryRouter>
+  )
   expect(screen.getByText(/Compliance & Policy Dashboard/i)).toBeInTheDocument()
 })
 
 test('navigates to Policies and Audits via sidebar', () => {
-  render(<App />)
+  render(
+    <MemoryRouter initialEntries={['/']}>
+      <App />
+    </MemoryRouter>
+  )
 
   // Policies
   fireEvent.click(screen.getByRole('button', { name: /Policies/i }))

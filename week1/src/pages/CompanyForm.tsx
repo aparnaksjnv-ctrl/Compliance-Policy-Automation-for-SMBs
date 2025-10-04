@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { Skeleton } from '../components/Skeleton'
+import { useToast } from '../components/Toast'
 
 export function CompanyForm({ token }: { token: string }) {
   const [industry, setIndustry] = useState('')
@@ -8,6 +10,7 @@ export function CompanyForm({ token }: { token: string }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const { notify } = useToast()
 
   useEffect(() => {
     let ignore = false
@@ -40,8 +43,10 @@ export function CompanyForm({ token }: { token: string }) {
     try {
       await api.saveCompany(token, { industry, region, size })
       setMessage('Saved')
+      notify('Company profile saved', 'success')
     } catch (e: any) {
       setMessage(e?.message || 'Failed to save')
+      notify(e?.message || 'Failed to save Company profile', 'error')
     } finally {
       setSaving(false)
     }
@@ -51,7 +56,11 @@ export function CompanyForm({ token }: { token: string }) {
     <div className="card">
       <div className="card-title">Company Profile</div>
       {loading ? (
-        <div>Loading…</div>
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-40" />
+        </div>
       ) : (
         <form onSubmit={submit} className="form" style={{ display: 'grid', gap: 12 }}>
           <label>
