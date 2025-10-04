@@ -1,12 +1,9 @@
 import { app } from './app'
 import { connectDB } from './db'
-import { config, assertEnv } from './config'
+import { config } from './config'
 
 async function main() {
   try {
-    if (!config.useInMemory) {
-      assertEnv('mongoUri')
-    }
     console.log(`[week1-api] DB mode: ${config.useInMemory ? 'in-memory' : 'mongodb'}`)
     await connectDB()
     const port = config.port

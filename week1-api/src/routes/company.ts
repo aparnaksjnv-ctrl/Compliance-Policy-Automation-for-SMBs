@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { Company } from '../models/Company'
 import { encryptJSON, decryptJSON } from '../utils/crypto'
-import { assertEnv } from '../config'
+import { config, assertNonEmptyString } from '../config'
 
 const router = Router()
 
@@ -20,7 +20,7 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
     const doc = await Company.findOne({ userId })
     if (!doc) return res.status(404).json({ error: 'Not found' })
     // Ensure encryption key configured
-    assertEnv('fieldEncryptionKey')
+    assertNonEmptyString(config.fieldEncryptionKey, 'FIELD_ENCRYPTION_KEY')
     const payload = decryptJSON<Record<string, unknown>>(doc.encrypted)
     return res.json({ profile: payload })
   } catch (err) {
@@ -34,7 +34,7 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   try {
     const userId = req.userId!
-    assertEnv('fieldEncryptionKey')
+    assertNonEmptyString(config.fieldEncryptionKey, 'FIELD_ENCRYPTION_KEY')
     const encrypted = encryptJSON(parsed.data)
     const updated = await Company.findOneAndUpdate(
       { userId },
