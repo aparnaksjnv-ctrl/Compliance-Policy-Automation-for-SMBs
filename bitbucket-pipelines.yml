@@ -13,6 +13,17 @@ pipelines:
           - npm ci || npm install
           - npm test -- --run || echo "No tests configured"
           - npm run build
+    - step:
+        name: Week1 API - Build & Test
+        caches:
+          - node
+        script:
+          - echo "Backend CI"
+          - cd week1-api
+          - node --version && npm --version
+          - npm ci || npm install
+          - npm test -- --run || echo "No backend tests configured"
+          - npm run build
 
   branches:
     main:
@@ -26,4 +37,15 @@ pipelines:
             - node --version && npm --version
             - npm ci || npm install
             - npm test -- --run || echo "No tests configured"
+            - npm run build
+      - step:
+          name: Main - Week1 API Build & Test
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week1 API"
+            - cd week1-api
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm test -- --run || echo "No backend tests configured"
             - npm run build
