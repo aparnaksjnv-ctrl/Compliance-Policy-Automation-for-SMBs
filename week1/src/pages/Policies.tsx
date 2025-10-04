@@ -56,17 +56,18 @@ export function Policies() {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <input
+          className="input"
           placeholder="Search by name or owner"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        <select value={status} onChange={e => setStatus(e.target.value as any)}>
+        <select className="input" value={status} onChange={e => setStatus(e.target.value as any)}>
           <option>All</option>
           <option>Draft</option>
           <option>In Review</option>
           <option>Approved</option>
         </select>
-        <button className="primary" onClick={() => setOpen(true)}>New Policy</button>
+        <button className="btn primary" onClick={() => setOpen(true)}>New Policy</button>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
@@ -99,23 +100,23 @@ export function Policies() {
         <form onSubmit={createPolicy} style={{ display: 'grid', gap: 10 }}>
           <label>
             <div>Name</div>
-            <input name="name" placeholder="e.g., Access Control" required />
+            <input className="input" name="name" placeholder="e.g., Access Control" required />
           </label>
           <label>
             <div>Owner</div>
-            <input name="owner" placeholder="e.g., Alex" required />
+            <input className="input" name="owner" placeholder="e.g., Alex" required />
           </label>
           <label>
             <div>Status</div>
-            <select name="status" defaultValue="Draft">
+            <select className="input" name="status" defaultValue="Draft">
               <option>Draft</option>
               <option>In Review</option>
               <option>Approved</option>
             </select>
           </label>
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button type="submit" className="primary">Create</button>
-            <button type="button" onClick={() => setOpen(false)}>Cancel</button>
+            <button type="submit" className="btn primary">Create</button>
+            <button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button>
           </div>
         </form>
       </Modal>
