@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Production build
+/dist/
+/dist-ssr/
+
+# Vite cache
+/.vite/
+
+# Env files (keep example only)
+.env*
+!.env.example
+
+# OS
+.DS_Store

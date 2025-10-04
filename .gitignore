@@ -65,3 +65,9 @@ TEST*.xml
 *.flv
 *.mov
 *.wmv
+
+# Local Netlify folder
+.netlify
+
+# TypeScript build info
+*.tsbuildinfo
