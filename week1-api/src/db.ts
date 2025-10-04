@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { config, assertEnv } from './config'
+import { config, assertNonEmptyString } from './config'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 
 let mem: MongoMemoryServer | null = null
@@ -10,7 +10,7 @@ export async function connectDB() {
     const uri = mem.getUri()
     await mongoose.connect(uri)
   } else {
-    const uri = assertEnv('mongoUri')
+    const uri = assertNonEmptyString(config.mongoUri, 'MONGO_URI')
     await mongoose.connect(uri)
   }
   return mongoose.connection
