@@ -14,4 +14,8 @@ app.use('/health', healthRouter)
 app.use('/auth', authRouter)
 app.use('/company', companyRouter)
 
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', service: 'week1-api' })
+})
+
 export default app
