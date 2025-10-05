@@ -24,6 +24,16 @@ pipelines:
           - npm ci || npm install
           - npm test -- --run || echo "No backend tests configured"
           - npm run build
+    - step:
+        name: Week2 API - Build
+        caches:
+          - node
+        script:
+          - echo "Week2 API CI"
+          - cd week2-api
+          - node --version && npm --version
+          - npm ci || npm install
+          - npm run build
 
   branches:
     main:
@@ -49,3 +59,14 @@ pipelines:
             - npm ci || npm install
             - npm test -- --run || echo "No backend tests configured"
             - npm run build
+      - step:
+          name: Main - Week2 API Build
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week2 API"
+            - cd week2-api
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+
