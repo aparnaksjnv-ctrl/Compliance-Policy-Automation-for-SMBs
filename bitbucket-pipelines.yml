@@ -14,6 +14,16 @@ pipelines:
           - npm test -- --run || echo "No tests configured"
           - npm run build
     - step:
+        name: Week2 - Build
+        caches:
+          - node
+        script:
+          - echo "Week2 frontend CI"
+          - cd week2
+          - node --version && npm --version
+          - npm ci || npm install
+          - npm run build
+    - step:
         name: Week1 API - Build & Test
         caches:
           - node
@@ -47,6 +57,16 @@ pipelines:
             - node --version && npm --version
             - npm ci || npm install
             - npm test -- --run || echo "No tests configured"
+            - npm run build
+      - step:
+          name: Main - Week2 Build
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week2 frontend"
+            - cd week2
+            - node --version && npm --version
+            - npm ci || npm install
             - npm run build
       - step:
           name: Main - Week1 API Build & Test
