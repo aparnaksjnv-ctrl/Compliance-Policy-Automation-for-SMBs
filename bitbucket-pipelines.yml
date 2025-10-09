@@ -24,6 +24,19 @@ pipelines:
           - npm ci || npm install
           - npm run build
     - step:
+        name: Week2 - Smoke Test
+        caches:
+          - node
+        script:
+          - echo "Week2 smoke test: serve dist and check 200"
+          - cd week2
+          - node --version && npm --version
+          - npm ci || npm install
+          - npm run build
+          - npx -y serve -s dist -l 4173 > /dev/null 2>&1 &
+          - echo "const http=require('http');const url='http://127.0.0.1:4173';const start=Date.now();(function check(){http.get(url,res=>{if(res.statusCode===200){console.log('Smoke OK');process.exit(0)} else {if(Date.now()-start>20000){console.error('Smoke fail status',res.statusCode);process.exit(1)} setTimeout(check,500)}}).on('error',()=>{if(Date.now()-start>20000){console.error('Smoke timeout');process.exit(1)} setTimeout(check,500)})})();" > smoke-check.js
+          - node smoke-check.js
+    - step:
         name: Week1 API - Build & Test
         caches:
           - node
@@ -68,6 +81,19 @@ pipelines:
             - node --version && npm --version
             - npm ci || npm install
             - npm run build
+      - step:
+          name: Main - Week2 Smoke Test
+          caches:
+            - node
+          script:
+            - echo "Main branch Week2 smoke test"
+            - cd week2
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+            - npx -y serve -s dist -l 4173 > /dev/null 2>&1 &
+            - echo "const http=require('http');const url='http://127.0.0.1:4173';const start=Date.now();(function check(){http.get(url,res=>{if(res.statusCode===200){console.log('Smoke OK');process.exit(0)} else {if(Date.now()-start>20000){console.error('Smoke fail status',res.statusCode);process.exit(1)} setTimeout(check,500)}}).on('error',()=>{if(Date.now()-start>20000){console.error('Smoke timeout');process.exit(1)} setTimeout(check,500)})})();" > smoke-check.js
+            - node smoke-check.js
       - step:
           name: Main - Week1 API Build & Test
           caches:
