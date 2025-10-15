@@ -60,6 +60,7 @@ pipelines:
             - npm run build
       - step:
           name: Main - Week2 Build
+          deployment: Production
           caches:
             - node
           script:
@@ -81,10 +82,83 @@ pipelines:
             - npm run build
       - step:
           name: Main - Week2 API Build
+          deployment: Production
           caches:
             - node
           script:
             - echo "Main branch CI for Week2 API"
+            - cd week2-api
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+
+    dev:
+      - step:
+          name: Dev - Frontend Build
+          deployment: Dev
+          caches:
+            - node
+          script:
+            - echo "Dev branch: build Week2 frontend"
+            - cd week2
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: Dev - API Build
+          deployment: Dev
+          caches:
+            - node
+          script:
+            - echo "Dev branch: build Week2 API"
+            - cd week2-api
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+
+    uat:
+      - step:
+          name: UAT - Frontend Build
+          deployment: UAT
+          caches:
+            - node
+          script:
+            - echo "UAT branch: build Week2 frontend"
+            - cd week2
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: UAT - API Build
+          deployment: UAT
+          caches:
+            - node
+          script:
+            - echo "UAT branch: build Week2 API"
+            - cd week2-api
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+
+    production:
+      - step:
+          name: Production - Frontend Build
+          deployment: Production
+          caches:
+            - node
+          script:
+            - echo "Production branch: build Week2 frontend"
+            - cd week2
+            - node --version && npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: Production - API Build
+          deployment: Production
+          caches:
+            - node
+          script:
+            - echo "Production branch: build Week2 API"
             - cd week2-api
             - node --version && npm --version
             - npm ci || npm install
