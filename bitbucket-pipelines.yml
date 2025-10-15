@@ -65,7 +65,6 @@ pipelines:
             - npm run build
       - step:
           name: Main - Week2 Build
-          deployment: Production
           caches:
             - node
           script:
@@ -103,7 +102,6 @@ pipelines:
     dev:
       - step:
           name: Dev - Frontend Build
-          deployment: Dev
           caches:
             - node
           script:
@@ -129,7 +127,6 @@ pipelines:
     uat:
       - step:
           name: UAT - Frontend Build
-          deployment: UAT
           caches:
             - node
           script:
@@ -155,7 +152,6 @@ pipelines:
     production:
       - step:
           name: Production - Frontend Build
-          deployment: Production
           caches:
             - node
           script:
