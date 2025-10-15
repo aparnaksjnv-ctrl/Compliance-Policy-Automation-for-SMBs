@@ -195,4 +195,53 @@ export const api = {
       return m.updateFinding(auditId, findingId, payload)
     }
   },
+
+  // Week 3: Risk Assessments
+  async listAssessments(token: string, params?: { q?: string; status?: AssessmentStatus | 'All'; framework?: Framework | 'All'; dueBefore?: string }) {
+    const qs = new URLSearchParams()
+    if (params?.q) qs.set('q', params.q)
+    if (params?.status && params.status !== 'All') qs.set('status', params.status)
+    if (params?.framework && params.framework !== 'All') qs.set('framework', params.framework)
+    if (params?.dueBefore) qs.set('dueBefore', params.dueBefore)
+    return request<{ items: Assessment[] }>(`/assessments?${qs.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+  },
+  async createAssessment(token: string, payload: Omit<Assessment, 'id' | '_id' | 'items'>) {
+    return request<{ id: string }>(`/assessments`, { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
+  },
+  async getAssessment(token: string, id: string) {
+    return request<Assessment>(`/assessments/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+  },
+  async updateAssessment(token: string, id: string, payload: Partial<Omit<Assessment, 'id' | '_id'>>) {
+    return request<{ id: string }>(`/assessments/${id}`, { method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
+  },
+  async addAssessmentItem(token: string, id: string, payload: { text: string; category?: string; severity: RiskSeverity }) {
+    return request<{ id: string }>(`/assessments/${id}/items`, { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
+  },
+  async updateAssessmentItem(token: string, id: string, itemId: string, payload: Partial<AssessmentItem>) {
+    return request<{ id: string }>(`/assessments/${id}/items/${itemId}`, { method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
+  },
+}
+
+// Types for Assessments
+export type AssessmentStatus = 'Draft' | 'In Progress' | 'Completed'
+export type ItemResponse = 'Yes' | 'No' | 'N/A'
+export type AssessmentItem = {
+  id: string
+  text: string
+  category?: string
+  severity: RiskSeverity
+  response: ItemResponse
+  notes?: string
+  evidenceUrls?: string[]
+  createdAt: string
+}
+export type Assessment = {
+  id: string
+  _id?: string
+  name: string
+  owner: string
+  framework?: Framework
+  status: AssessmentStatus
+  dueDate?: string
+  items?: AssessmentItem[]
 }

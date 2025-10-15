@@ -122,9 +122,16 @@ router.post('/:id/generate', authMiddleware, async (req: AuthedRequest, res) => 
   if (!policy) return res.status(404).json({ error: 'Not found' })
 
   const model = parsed.data.model || process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  const vars = parsed.data.variables || {}
+  const varsList = Object.entries(vars)
+    .filter(([_, v]) => typeof v === 'string' && v)
+    .map(([k, v]) => `${k}: ${String(v)}`)
+    .slice(0, 16)
+    .join(', ')
   const system = `You are a compliance policy drafting assistant. Generate a clear, structured, and legally-aligned policy draft.
 Framework: ${policy.framework || 'N/A'}
 Company: ${policy.company || 'N/A'}
+Variables: ${varsList || 'None provided'}
 Instructions: Keep sections with headings and bullet points where helpful. Do not fabricate facts.`
   const userMsg = parsed.data.prompt || 'Draft a concise, organization-ready policy based on the given framework and company context.'
 

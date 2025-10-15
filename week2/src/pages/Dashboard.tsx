@@ -57,6 +57,9 @@ export function Dashboard({ token }: { token: string }) {
           <Link to="/audits" style={{ textDecoration: 'none' }}>
             <div style={navStyle(loc.pathname.startsWith('/audits'))}>Audits</div>
           </Link>
+          <Link to="/assessments" style={{ textDecoration: 'none' }}>
+            <div style={navStyle(loc.pathname.startsWith('/assessments'))}>Assessments</div>
+          </Link>
           <Link to="/settings" style={{ textDecoration: 'none' }}>
             <div style={navStyle(loc.pathname.startsWith('/settings'))}>Settings</div>
           </Link>

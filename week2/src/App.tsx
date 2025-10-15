@@ -9,6 +9,8 @@ import { Dashboard } from './pages/Dashboard'
 import { Audits } from './pages/Audits'
 import { Settings } from './pages/Settings'
 import { AuditDetail } from './pages/AuditDetail'
+import { Assessments } from './pages/Assessments'
+import { AssessmentDetail } from './pages/AssessmentDetail'
 
 function Protected({ authed, children }: { authed: boolean; children: JSX.Element }) {
   if (!authed) return <Navigate to="/login" replace />
@@ -59,6 +61,8 @@ export default function App() {
         <Route path="/policies/:id" element={<Protected authed={!!token}><PolicyDetail token={token} /></Protected>} />
         <Route path="/audits" element={<Protected authed={!!token}><Audits token={token} /></Protected>} />
         <Route path="/audits/:id" element={<Protected authed={!!token}><AuditDetail token={token} /></Protected>} />
+        <Route path="/assessments" element={<Protected authed={!!token}><Assessments token={token} /></Protected>} />
+        <Route path="/assessments/:id" element={<Protected authed={!!token}><AssessmentDetail token={token} /></Protected>} />
         <Route path="/settings" element={<Protected authed={!!token}><Settings /></Protected>} />
         <Route path="*" element={<Navigate to={token ? '/' : '/login'} replace />} />
       </Routes>

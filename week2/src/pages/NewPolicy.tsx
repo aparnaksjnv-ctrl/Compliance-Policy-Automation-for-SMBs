@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { api, Framework, PolicyStatus } from '../api'
+import { renderTemplate } from '../utils/templating'
+import { TEMPLATES, type TemplateKey } from '../utils/templates'
 
 export function NewPolicy({ token }: { token: string }) {
   const navigate = useNavigate()
@@ -13,6 +15,10 @@ export function NewPolicy({ token }: { token: string }) {
   const [note, setNote] = useState('Initial draft')
   const [autoGenerate, setAutoGenerate] = useState(false)
   const [genPrompt, setGenPrompt] = useState('')
+  const [tplKey, setTplKey] = useState<TemplateKey | undefined>(undefined)
+  const [contactEmail, setContactEmail] = useState('')
+  const [dataProcessor, setDataProcessor] = useState('')
+  const [dataRetentionMonths, setDataRetentionMonths] = useState('12')
 
   const create = useMutation({
     mutationFn: async () => {
@@ -26,7 +32,18 @@ export function NewPolicy({ token }: { token: string }) {
       })
       const id = res.id
       if (autoGenerate) {
-        try { await api.generateDraft(token, id, { prompt: genPrompt || undefined }) } catch {}
+        try {
+          await api.generateDraft(token, id, {
+            prompt: genPrompt || undefined,
+            variables: {
+              company: company || undefined,
+              owner: owner || undefined,
+              contactEmail: contactEmail || undefined,
+              dataProcessor: dataProcessor || undefined,
+              dataRetentionMonths: dataRetentionMonths || undefined,
+            },
+          })
+        } catch {}
       }
       navigate(`/policies/${id}`)
       return res
@@ -64,9 +81,54 @@ export function NewPolicy({ token }: { token: string }) {
           </select>
         </label>
         <label>
+          <div>Template</div>
+          <select
+            value={tplKey || ''}
+            onChange={e => {
+              const val = e.target.value
+              setTplKey(val ? (val as TemplateKey) : undefined)
+            }}
+          >
+            <option value="">None</option>
+            {Object.entries(TEMPLATES).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
           <div>Company (optional)</div>
           <input value={company} onChange={e => setCompany(e.target.value)} />
         </label>
+        {tplKey && (
+          <>
+            <label>
+              <div>Contact Email (optional)</div>
+              <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} />
+            </label>
+            <label>
+              <div>Vendor/Data Processor (optional)</div>
+              <input value={dataProcessor} onChange={e => setDataProcessor(e.target.value)} />
+            </label>
+            <label>
+              <div>Data Retention Months (optional)</div>
+              <input value={dataRetentionMonths} onChange={e => setDataRetentionMonths(e.target.value)} />
+            </label>
+            <div>
+              <button type="button" onClick={() => {
+                const tplDef = tplKey ? TEMPLATES[tplKey] : undefined
+                const rendered = tplDef ? renderTemplate(tplDef.content, {
+                  company,
+                  owner,
+                  contactEmail,
+                  dataProcessor,
+                  dataRetentionMonths,
+                } as any) : ''
+                setContent(rendered)
+                if (!genPrompt) setGenPrompt('Improve and expand the applied template to be organization-ready and compliant. Keep headings and structure.')
+              }}>Use template</button>
+            </div>
+          </>
+        )}
         <label>
           <div>Initial content (optional)</div>
           <textarea rows={6} value={content} onChange={e => setContent(e.target.value)} />
