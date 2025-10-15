@@ -36,7 +36,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy — Week 2</h1>
+        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
         {token && (
           <div style={{ display: 'flex', gap: 8 }}>
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/policies/new') }} style={{ textDecoration: 'none' }}>
