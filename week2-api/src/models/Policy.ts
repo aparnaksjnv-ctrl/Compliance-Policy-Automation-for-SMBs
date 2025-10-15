@@ -8,6 +8,10 @@ export interface IPolicy extends Document {
   owner: string
   status: PolicyStatus
   content?: string
+  framework?: 'GDPR' | 'HIPAA' | 'CCPA' | 'Other'
+  company?: string
+  variables?: Record<string, unknown>
+  versions?: { content: string; note?: string; createdAt: Date }[]
 }
 
 const PolicySchema = new Schema<IPolicy>({
@@ -16,6 +20,22 @@ const PolicySchema = new Schema<IPolicy>({
   owner: { type: String, required: true },
   status: { type: String, enum: ['Draft', 'In Review', 'Approved'], default: 'Draft', index: true },
   content: { type: String },
+  framework: { type: String, enum: ['GDPR', 'HIPAA', 'CCPA', 'Other'], default: undefined },
+  company: { type: String, default: undefined },
+  variables: { type: Schema.Types.Mixed, default: undefined },
+  versions: {
+    type: [
+      new Schema(
+        {
+          content: { type: String, required: true },
+          note: { type: String },
+          createdAt: { type: Date, default: Date.now },
+        },
+        { _id: true }
+      ),
+    ],
+    default: [],
+  },
 }, { timestamps: true })
 
 PolicySchema.index({ userId: 1, name: 1 })
