@@ -1,118 +1,35 @@
-image: node:20
+# This is an example Starter pipeline configuration
+# Use a skeleton to build, test and deploy using manual and parallel steps
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+
+image: atlassian/default-image:3
 
 pipelines:
   default:
-    - step:
-        name: Week1 - Build & Test
-        caches:
-          - node
-        script:
-          - echo "Starting Week1 CI"
-          - cd week1
-          - node --version && npm --version
-          - npm ci || npm install
-          - npm test -- --run || echo "No tests configured"
-          - npm run build
-    - step:
-        name: Week2 - Build
-        caches:
-          - node
-        script:
-          - echo "Week2 frontend CI"
-          - cd week2
-          - node --version && npm --version
-          - npm ci || npm install
-          - npm run build
-    - step:
-        name: Week2 - Smoke Test
-        caches:
-          - node
-        script:
-          - echo "Week2 smoke test: vite preview and check 200"
-          - cd week2
-          - node --version && npm --version
-          - npm ci || npm install
-          - npm run build
-          - npm run preview -- --port 4173 --strictPort --host 127.0.0.1 > /dev/null 2>&1 &
-          - echo "const http=require('http');const url='http://127.0.0.1:4173';const start=Date.now();(function check(){http.get(url,res=>{if(res.statusCode===200){console.log('Smoke OK');process.exit(0)} else {if(Date.now()-start>40000){console.error('Smoke fail status',res.statusCode);process.exit(1)} setTimeout(check,500)}}).on('error',()=>{if(Date.now()-start>40000){console.error('Smoke timeout');process.exit(1)} setTimeout(check,500)})})();" > smoke-check.js
-          - node smoke-check.js
-    - step:
-        name: Week1 API - Build & Test
-        caches:
-          - node
-        script:
-          - echo "Backend CI"
-          - cd week1-api
-          - node --version && npm --version
-          - npm ci || npm install
-          - npm test -- --run || echo "No backend tests configured"
-          - npm run build
-    - step:
-        name: Week2 API - Build
-        caches:
-          - node
-        script:
-          - echo "Week2 API CI"
-          - cd week2-api
-          - node --version && npm --version
-          - npm ci || npm install
-          - npm run build
+    - parallel:
+      - step:
+          name: 'Build and Test'
+          script:
+            - echo "Your build and test goes here..."
+      - step:
+          name: 'Lint'
+          script:
+            - echo "Your linting goes here..."
+      - step:
+          name: 'Security scan'
+          script:
+            - echo "Your security scan goes here..."
 
-  branches:
-    main:
-      - step:
-          name: Main - Week1 Build & Test
-          caches:
-            - node
-          script:
-            - echo "Main branch CI for Week1"
-            - cd week1
-            - node --version && npm --version
-            - npm ci || npm install
-            - npm test -- --run || echo "No tests configured"
-            - npm run build
-      - step:
-          name: Main - Week2 Build
-          caches:
-            - node
-          script:
-            - echo "Main branch CI for Week2 frontend"
-            - cd week2
-            - node --version && npm --version
-            - npm ci || npm install
-            - npm run build
-      - step:
-          name: Main - Week2 Smoke Test
-          caches:
-            - node
-          script:
-            - echo "Main branch Week2 smoke test"
-            - cd week2
-            - node --version && npm --version
-            - npm ci || npm install
-            - npm run build
-            - npm run preview -- --port 4173 --strictPort --host 127.0.0.1 > /dev/null 2>&1 &
-            - echo "const http=require('http');const url='http://127.0.0.1:4173';const start=Date.now();(function check(){http.get(url,res=>{if(res.statusCode===200){console.log('Smoke OK');process.exit(0)} else {if(Date.now()-start>40000){console.error('Smoke fail status',res.statusCode);process.exit(1)} setTimeout(check,500)}}).on('error',()=>{if(Date.now()-start>40000){console.error('Smoke timeout');process.exit(1)} setTimeout(check,500)})})();" > smoke-check.js
-            - node smoke-check.js
-      - step:
-          name: Main - Week1 API Build & Test
-          caches:
-            - node
-          script:
-            - echo "Main branch CI for Week1 API"
-            - cd week1-api
-            - node --version && npm --version
-            - npm ci || npm install
-            - npm test -- --run || echo "No backend tests configured"
-            - npm run build
-      - step:
-          name: Main - Week2 API Build
-          caches:
-            - node
-          script:
-            - echo "Main branch CI for Week2 API"
-            - cd week2-api
-            - node --version && npm --version
-            - npm ci || npm install
-            - npm run build
-
+    # The following deployment steps will be executed for each pipeline run. To configure your steps and conditionally deploy see https://support.atlassian.com/bitbucket-cloud/docs/configure-bitbucket-pipelinesyml/
+    - step:
+        name: 'Deployment to Staging'
+        deployment: staging
+        script:
+          - echo "Your deployment to staging script goes here..."
+    - step:
+        name: 'Deployment to Production'
+        deployment: production
+        trigger: 'manual'
+        script:
+          - echo "Your deployment to production script goes here..."
