@@ -21,6 +21,7 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 
 export type PolicyStatus = 'Draft' | 'In Review' | 'Approved'
 export type Policy = { id: string; _id?: string; name: string; owner: string; status: PolicyStatus; content?: string }
+export type GeneratePayload = { template: 'GDPR' | 'HIPAA' | 'CCPA'; company?: unknown; existingContent?: string }
 
 export const api = {
   async register(email: string, password: string) {
@@ -58,6 +59,19 @@ export const api = {
     return fetch(BASE + `/policies/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).then(res => {
       if (!res.ok) throw new Error('Failed to delete')
       return true
+    })
+  },
+  async generatePolicy(token: string, payload: GeneratePayload) {
+    return request<{ content: string }>(`/policies/generate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async exportPolicy(token: string, id: string) {
+    return request<{ ok: boolean; url?: string; content?: string; error?: string }>(`/policies/${id}/export`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
     })
   },
 }
