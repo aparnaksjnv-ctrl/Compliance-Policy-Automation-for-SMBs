@@ -1,7 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyJwt } from '../utils/jwt'
 
-export interface AuthedRequest extends Request {
+export interface AuthedRequest<
+  P = any,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = any
+> extends Request<P, ResBody, ReqBody, ReqQuery> {
   userId?: string
 }
 

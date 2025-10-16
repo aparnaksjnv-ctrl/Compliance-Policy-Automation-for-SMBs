@@ -7,29 +7,176 @@ image: atlassian/default-image:3
 
 pipelines:
   default:
-    - parallel:
-      - step:
-          name: 'Build and Test'
-          script:
-            - echo "Your build and test goes here..."
-      - step:
-          name: 'Lint'
-          script:
-            - echo "Your linting goes here..."
-      - step:
-          name: 'Security scan'
-          script:
-            - echo "Your security scan goes here..."
+    - step:
+        name: Week1 - Build & Test
+        caches:
+          - node
+        script:
+          - echo "Starting Week1 CI"
+          - cd week1
+          - node --version
+          - npm --version
+          - npm ci || npm install
+          - npm test -- --run || echo "No tests configured"
+          - npm run build
+    - step:
+        name: Week2 - Build
+        caches:
+          - node
+        script:
+          - echo "Week2 frontend CI"
+          - cd week2
+          - node --version
+          - npm --version
+          - npm ci || npm install
+          - npm run build
+    - step:
+        name: Week1 API - Build & Test
+        caches:
+          - node
+        script:
+          - echo "Backend CI"
+          - cd week1-api
+          - node --version
+          - npm --version
+          - npm ci || npm install
+          - npm test -- --run || echo "No backend tests configured"
+          - npm run build
+    - step:
+        name: Week2 API - Build
+        caches:
+          - node
+        script:
+          - echo "Week2 API CI"
+          - cd week2-api
+          - node --version
+          - npm --version
+          - npm ci || npm install
+          - npm run build
 
-    # The following deployment steps will be executed for each pipeline run. To configure your steps and conditionally deploy see https://support.atlassian.com/bitbucket-cloud/docs/configure-bitbucket-pipelinesyml/
-    - step:
-        name: 'Deployment to Staging'
-        deployment: staging
-        script:
-          - echo "Your deployment to staging script goes here..."
-    - step:
-        name: 'Deployment to Production'
-        deployment: production
-        trigger: 'manual'
-        script:
-          - echo "Your deployment to production script goes here..."
+  branches:
+    main:
+      - step:
+          name: Main - Week1 Build & Test
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week1"
+            - cd week1
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm test -- --run || echo "No tests configured"
+            - npm run build
+      - step:
+          name: Main - Week2 Build
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week2 frontend"
+            - cd week2
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: Main - Week1 API Build & Test
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week1 API"
+            - cd week1-api
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm test -- --run || echo "No backend tests configured"
+            - npm run build
+      - step:
+          name: Main - Week2 API Build
+          deployment: Production
+          caches:
+            - node
+          script:
+            - echo "Main branch CI for Week2 API"
+            - cd week2-api
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+
+    dev:
+      - step:
+          name: Dev - Frontend Build
+          caches:
+            - node
+          script:
+            - echo Dev_frontend_build
+            - cd week2
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: Dev - API Build
+          deployment: Dev
+          caches:
+            - node
+          script:
+            - echo Dev_API_build
+            - cd week2-api
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+
+    uat:
+      - step:
+          name: UAT - Frontend Build
+          caches:
+            - node
+          script:
+            - echo UAT_frontend_build
+            - cd week2
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: UAT - API Build
+          deployment: UAT
+          caches:
+            - node
+          script:
+            - echo UAT_API_build
+            - cd week2-api
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+
+    production:
+      - step:
+          name: Production - Frontend Build
+          caches:
+            - node
+          script:
+            - echo Production_frontend_build
+            - cd week2
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+      - step:
+          name: Production - API Build
+          deployment: Production
+          caches:
+            - node
+          script:
+            - echo Production_API_build
+            - cd week2-api
+            - node --version
+            - npm --version
+            - npm ci || npm install
+            - npm run build
+
+

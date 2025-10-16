@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { User } from '../models/User'
 import { signJwt } from '../utils/jwt'
+import { authMiddleware, AuthedRequest } from '../middleware/auth'
 
 const router = Router()
 
@@ -20,7 +21,9 @@ router.post('/register', async (req, res) => {
   if (existing) return res.status(409).json({ error: 'Email already registered' })
 
   const passwordHash = await bcrypt.hash(password, 12)
-  const user = await User.create({ email, passwordHash })
+  const hasAdmin = await User.exists({ role: 'admin' })
+  const role: 'user' | 'admin' = hasAdmin ? 'user' : 'admin'
+  const user = await User.create({ email, passwordHash, role })
   const token = signJwt(user.id)
   return res.status(201).json({ token })
 })
@@ -46,3 +49,10 @@ router.post('/login', async (req, res) => {
 })
 
 export default router
+
+// Return current user profile
+router.get('/me', authMiddleware, async (req: AuthedRequest, res) => {
+  const user = await User.findById(req.userId).lean()
+  if (!user) return res.status(404).json({ error: 'Not found' })
+  return res.json({ id: String(user._id), email: user.email, role: user.role })
+})
