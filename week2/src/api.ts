@@ -46,6 +46,8 @@ export type Policy = {
   versions?: { content: string; note?: string; createdAt: string }[]
 }
 
+export type GeneratePayload = { template: 'GDPR' | 'HIPAA' | 'CCPA'; company?: unknown; existingContent?: string }
+
 // Week 3: Audits & Findings
 export type RiskSeverity = 'Low' | 'Medium' | 'High'
 export type Finding = {
@@ -107,6 +109,19 @@ export const api = {
     return fetch(BASE + `/policies/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).then(res => {
       if (!res.ok) throw new Error('Failed to delete')
       return true
+    })
+  },
+  async generatePolicy(token: string, payload: GeneratePayload) {
+    return request<{ content: string }>(`/policies/generate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async exportPolicy(token: string, id: string) {
+    return request<{ ok: boolean; url?: string; content?: string; error?: string }>(`/policies/${id}/export`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
     })
   },
   async submitReview(token: string, id: string) {

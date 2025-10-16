@@ -10,3 +10,27 @@ button{cursor:pointer}
 
 a{color:#22c55e;text-decoration:none}
 a:hover{text-decoration:underline}
+
+/* Layout */
+.container{max-width:1200px;margin:0 auto;padding:16px}
+
+/* Buttons */
+.btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:#0b1220;color:var(--text)}
+.btn--primary{background:#059669;border-color:#065f46;color:white}
+.btn--outline{background:transparent}
+.btn--danger{background:#dc2626;border-color:#991b1b;color:white}
+
+/* Cards */
+.card{border:1px solid var(--border);border-radius:10px;padding:12px;background:#111827}
+.card--muted{background:#0b1220}
+
+/* Chips */
+.chip{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:12px;border:1px solid var(--border);background:#0b1220}
+.chip--draft{background:#0b1220}
+.chip--review{background:rgba(234,179,8,0.15);border-color:#ca8a04}
+.chip--approved{background:rgba(34,197,94,0.15);border-color:#16a34a}
+
+/* Tables */
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left}
+.table tr:hover td{background:#0b1220}

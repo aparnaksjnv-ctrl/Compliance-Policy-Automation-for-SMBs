@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api, Policy, PolicyStatus, Framework } from '../api'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type React from 'react'
 import toast from 'react-hot-toast'
 import DOMPurify from 'dompurify'
@@ -36,6 +36,21 @@ export function PolicyDetail({ token }: { token: string }) {
     })
   }, [data])
 
+  // Rich text editor (Quill)
+  const editorEl = useRef<HTMLDivElement>(null)
+  const quill = useRef<any>(null)
+  useEffect(() => {
+    const Q = (window as any).Quill
+    if (editorEl.current && Q && !quill.current) {
+      quill.current = new Q(editorEl.current, { theme: 'snow' })
+      if (form.content) quill.current.root.innerHTML = form.content
+      quill.current.on('text-change', () => {
+        const html = String(quill.current.root.innerHTML || '')
+        setForm(prev => ({ ...prev, content: html }))
+      })
+    }
+  }, [editorEl, form.content])
+
   const update = useMutation({
     mutationFn: (payload: Partial<Policy> & { note?: string }) => api.updatePolicy(token, id, payload),
     onSuccess: () => { toast.success('Saved'); refetch() },
@@ -58,6 +73,55 @@ export function PolicyDetail({ token }: { token: string }) {
     mutationFn: () => api.approve(token, id),
     onSuccess: () => { toast.success('Approved'); refetch() },
     onError: (e: any) => toast.error(String(e?.message || 'Approve failed')),
+  })
+
+  // Template-based generation + company JSON upload
+  const [template, setTemplate] = useState<'GDPR' | 'HIPAA' | 'CCPA'>('GDPR')
+  const [companyText, setCompanyText] = useState('')
+  const [companyObj, setCompanyObj] = useState<any>(null)
+  function onCompanyFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = String(reader.result || '')
+      setCompanyText(text)
+      try { setCompanyObj(JSON.parse(text)) } catch { setCompanyObj(null) }
+    }
+    reader.readAsText(f)
+  }
+
+  const genTemplates = useMutation({
+    mutationFn: async () => {
+      const existing = quill.current ? String(quill.current.root.innerHTML || '') : (form.content || '')
+      return api.generatePolicy(token, { template, company: companyObj || undefined, existingContent: existing })
+    },
+    onSuccess: (res) => {
+      const html = String(res.content || '').replace(/\n/g, '<br/>')
+      setForm(prev => ({ ...prev, content: html }))
+      if (quill.current) quill.current.root.innerHTML = html
+      toast.success('Generated from template')
+    },
+    onError: (e: any) => toast.error(String(e?.message || 'Generate failed')),
+  })
+
+  const exp = useMutation({
+    mutationFn: () => api.exportPolicy(token, id),
+    onSuccess: (res) => {
+      if ((res as any).url) {
+        window.open((res as any).url, '_blank')
+      } else if ((res as any).content) {
+        const blob = new Blob([String((res as any).content)], { type: 'text/plain' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'policy.txt'
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+      toast.success('Export ready')
+    },
+    onError: (e: any) => toast.error(String(e?.message || 'Export failed')),
   })
 
   const [genPrompt, setGenPrompt] = useState('')
@@ -95,7 +159,8 @@ export function PolicyDetail({ token }: { token: string }) {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    update.mutate({ ...form, note: note || undefined })
+    const html = quill.current ? String(quill.current.root.innerHTML || '') : form.content
+    update.mutate({ ...form, content: html, note: note || undefined })
     setNote('')
   }
 
@@ -138,10 +203,19 @@ export function PolicyDetail({ token }: { token: string }) {
           <div>Company</div>
           <input value={form.company || ''} onChange={e => onChange('company', e.target.value as any)} />
         </label>
-        <label>
-          <div>Content</div>
-          <textarea rows={8} value={form.content || ''} onChange={e => onChange('content', e.target.value as any)} />
-        </label>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={template} onChange={e => setTemplate(e.target.value as any)}>
+              <option value="GDPR">GDPR</option>
+              <option value="HIPAA">HIPAA</option>
+              <option value="CCPA">CCPA</option>
+            </select>
+            <input type="file" accept="application/json" onChange={onCompanyFile} />
+            <button type="button" onClick={() => genTemplates.mutate()} disabled={genTemplates.isPending}>Generate (template)</button>
+            <button type="button" onClick={() => exp.mutate()} disabled={exp.isPending}>Export</button>
+          </div>
+          <div ref={editorEl} style={{ background: '#111827', color: '#e5e7eb', border: '1px solid var(--border)', borderRadius: 8 }} />
+        </div>
         <label>
           <div>Change note (optional)</div>
           <input value={note} onChange={e => setNote(e.target.value)} placeholder="Describe what changed" />
