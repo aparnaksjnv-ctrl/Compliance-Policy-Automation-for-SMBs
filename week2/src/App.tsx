@@ -39,6 +39,7 @@ export default function App() {
         <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
         {token && (
           <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" onClick={() => navigate('/')}>Home</button>
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/policies/new') }} style={{ textDecoration: 'none' }}>
               <button className="btn btn--primary">New Policy</button>
             </a>
