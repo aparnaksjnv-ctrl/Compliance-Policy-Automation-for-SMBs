@@ -201,6 +201,80 @@ router.get('/:id/versions', authMiddleware, async (req: AuthedRequest, res) => {
   res.json({ versions: doc.versions || [] })
 })
 
+// Template-based generation (no persistence) — used by UI "Generate (template)"
+router.post('/generate', authMiddleware, async (req: AuthedRequest, res) => {
+  const schema = z.object({
+    template: z.enum(['GDPR','HIPAA','CCPA']),
+    company: z.any().optional(),
+    existingContent: z.string().optional(),
+  })
+  const parsed = schema.safeParse(req.body || {})
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const t = parsed.data.template
+  const c: any = parsed.data.company || {}
+  const companyName = String(c.name || c.company || c.org || c.organization || c.orgName || 'Your Company')
+  const owner = String(c.owner || c.contact || c.dataProtectionLead || 'Owner')
+  const contactEmail = String(c.contactEmail || c.email || '')
+  const dataProcessor = String(c.dataProcessor || c.vendorManager || '')
+  const dataRetentionMonths = String(c.dataRetentionMonths || '12')
+
+  let content = ''
+  if (t === 'GDPR') {
+    content = `# ${companyName} — GDPR Data Protection Policy
+
+## Purpose
+This policy establishes how ${companyName} processes personal data in compliance with the EU GDPR.
+
+## Roles and Responsibilities
+- Data Protection Lead: ${owner}
+- Contact: ${contactEmail || '—'}
+
+## Lawful Basis
+All processing activities have a documented lawful basis.
+
+## Data Retention
+Data retained for ${dataRetentionMonths} months unless a longer period is required.
+
+## Vendor Management
+Vendors are evaluated, approved, and monitored by ${dataProcessor || 'the Compliance team'}.
+
+## Security
+Appropriate technical and organizational measures are implemented and reviewed.
+`
+  } else if (t === 'HIPAA') {
+    content = `# ${companyName} — HIPAA Privacy & Security Policy
+
+## Roles
+- HIPAA Privacy Officer: ${owner}
+- Contact: ${contactEmail || '—'}
+
+## Administrative Safeguards
+- Annual risk assessments
+- Workforce training
+
+## Technical Safeguards
+- Access controls, audit controls, integrity, transmission security
+`
+  } else if (t === 'CCPA') {
+    content = `# ${companyName} — CCPA Consumer Privacy Policy
+
+## Notice at Collection
+Consumers are informed of categories of personal information collected and purposes.
+
+## Consumer Rights
+Right to know, delete, and opt-out of sale/share.
+
+## Service Providers
+Contracts restrict use of personal information to business purpose.
+`
+  }
+
+  const existing = parsed.data.existingContent?.trim()
+  const out = existing ? `${existing}\n\n${content}` : content
+  res.json({ content: out })
+})
+
 // AI-assisted draft generation (optional)
 router.post('/:id/generate', authMiddleware, async (req: AuthedRequest, res) => {
   const apiKey = process.env.OPENAI_API_KEY
@@ -264,6 +338,15 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Generation failed' })
   }
+})
+
+// Export current policy content (simple text export)
+router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
+  const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
+  if (!policy) return res.status(404).json({ error: 'Not found' })
+  const content = String(policy.content || '')
+  // For simplicity return inline content; frontend will download as file
+  res.json({ ok: true, content })
 })
 
 export default router
