@@ -8,6 +8,7 @@ import authRouter from './routes/auth'
 import policiesRouter from './routes/policies'
 import auditsRouter from './routes/audits'
 import assessmentsRouter from './routes/assessments'
+import vendorsRouter from './routes/vendors'
 
 export const app = express()
 
@@ -23,6 +24,7 @@ app.use('/auth', authRouter)
 app.use('/policies', policiesRouter)
 app.use('/audits', auditsRouter)
 app.use('/assessments', assessmentsRouter)
+app.use('/vendors', vendorsRouter)
 
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', service: 'week2-api' })

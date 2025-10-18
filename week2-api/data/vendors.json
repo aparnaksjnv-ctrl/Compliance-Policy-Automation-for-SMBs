@@ -1,0 +1,18 @@
+[
+  {
+    "id": "6d2b0kcgaylmgvp124n",
+    "userId": "68f3038aa2f36434d4cf717b",
+    "createdAt": "2025-10-18T03:03:38.759Z",
+    "updatedAt": "2025-10-18T03:03:38.759Z",
+    "name": "Acme Payments",
+    "serviceType": "Payments",
+    "standards": [
+      "GDPR",
+      "CCPA"
+    ],
+    "riskLevel": "Medium",
+    "status": "Pending",
+    "lastAuditDate": "2025-01-10",
+    "notes": "Onboarding"
+  }
+]

@@ -235,6 +235,61 @@ export const api = {
   async updateAssessmentItem(token: string, id: string, itemId: string, payload: Partial<AssessmentItem>) {
     return request<{ id: string }>(`/assessments/${id}/items/${itemId}`, { method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
   },
+
+  // Week 4: Vendors
+  async listVendors(
+    token: string,
+    params?: { q?: string; risk?: RiskLevel | 'All'; status?: ComplianceStatus | 'All'; framework?: string }
+  ) {
+    const qs = new URLSearchParams()
+    if (params?.q) qs.set('q', params.q)
+    if (params?.risk && params.risk !== 'All') qs.set('risk', params.risk)
+    if (params?.status && params.status !== 'All') qs.set('status', params.status)
+    if (params?.framework) qs.set('framework', params.framework)
+    return request<{ items: Vendor[] }>(`/vendors?${qs.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async createVendor(token: string, payload: Omit<Vendor, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) {
+    return request<{ id: string }>(`/vendors`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async updateVendor(token: string, id: string, payload: Partial<Omit<Vendor, 'id' | 'userId'>>) {
+    return request<{ id: string }>(`/vendors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async deleteVendor(token: string, id: string) {
+    const res = await fetch(BASE + `/vendors/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) throw new Error('Failed to delete')
+    return true
+  },
+  async uploadVendorsCSV(token: string, file: File) {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch(BASE + `/vendors/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json() as Promise<{ created: number; updated: number; failed: number }>
+  },
+  async exportVendorsCSV(token: string): Promise<Blob> {
+    const res = await fetch(BASE + `/vendors/export`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) throw new Error('Export failed')
+    return res.blob()
+  },
+  async exportVendorsTemplate(token: string): Promise<Blob> {
+    const res = await fetch(BASE + `/vendors/template`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) throw new Error('Template download failed')
+    return res.blob()
+  },
 }
 
 // Types for Assessments
@@ -259,4 +314,20 @@ export type Assessment = {
   status: AssessmentStatus
   dueDate?: string
   items?: AssessmentItem[]
+}
+
+// Week 4: Vendor types
+export type RiskLevel = 'Low' | 'Medium' | 'High'
+export type ComplianceStatus = 'Compliant' | 'Pending' | 'Not Compliant'
+export type Vendor = {
+  id: string
+  name: string
+  serviceType?: string
+  standards?: string[]
+  riskLevel?: RiskLevel
+  status?: ComplianceStatus
+  lastAuditDate?: string
+  notes?: string
+  createdAt?: string
+  updatedAt?: string
 }
