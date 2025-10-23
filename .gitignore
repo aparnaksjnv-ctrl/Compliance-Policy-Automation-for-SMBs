@@ -71,3 +71,8 @@ TEST*.xml
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Local data files
+week2-api/data/vendors.json
+week3-api/data/vendors.json
+week4-api/data/vendors.json

@@ -29,7 +29,7 @@ app.use('/assessments', assessmentsRouter)
 app.use('/vendors', vendorsRouter)
 
 app.get('/', (_req, res) => {
-  res.json({ status: 'ok', service: 'week2-api' })
+  res.json({ status: 'ok', service: 'week3-api' })
 })
 
 export default app
