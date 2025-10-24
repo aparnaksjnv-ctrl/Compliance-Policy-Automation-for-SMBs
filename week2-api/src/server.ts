@@ -1,11 +1,13 @@
 import { app } from './app'
 import { connectDB } from './db'
+import { runSeed } from './seed'
 import { config } from './config'
 
 async function main() {
   try {
     console.log(`[week2-api] DB mode: ${config.useInMemory ? 'in-memory' : 'mongodb'}`)
     await connectDB()
+    await runSeed()
     const port = config.port
     const host = '0.0.0.0'
     app.listen(port, host, () => {
