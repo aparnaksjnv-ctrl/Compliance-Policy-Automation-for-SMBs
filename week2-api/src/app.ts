@@ -34,8 +34,13 @@ app.post('/billing/webhook', express.raw({ type: 'application/json' }), async (r
       return res.status(400).send(`Webhook Error: ${err.message}`)
     }
     if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
-      const sub = event.data.object
-      const userId = sub?.metadata?.userId
+      const sub: any = event.data.object
+      let userId = sub?.metadata?.userId
+      if (!userId && sub?.customer) {
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
+        const cust: any = await stripe.customers.retrieve(customerId)
+        userId = cust?.metadata?.userId
+      }
       if (userId) {
         const { User } = await import('./models/User')
         const u: any = await (User as any).findById(userId)
@@ -47,8 +52,13 @@ app.post('/billing/webhook', express.raw({ type: 'application/json' }), async (r
       }
     }
     if (event.type === 'customer.subscription.deleted') {
-      const sub = event.data.object
-      const userId = sub?.metadata?.userId
+      const sub: any = event.data.object
+      let userId = sub?.metadata?.userId
+      if (!userId && sub?.customer) {
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
+        const cust: any = await stripe.customers.retrieve(customerId)
+        userId = cust?.metadata?.userId
+      }
       if (userId) {
         const { User } = await import('./models/User')
         const u: any = await (User as any).findById(userId)

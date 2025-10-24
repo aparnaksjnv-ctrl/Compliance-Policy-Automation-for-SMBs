@@ -4,6 +4,7 @@ import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
 import { logActivity } from '../utils/activity'
+import { requireActiveSubscription } from '../middleware/subscription'
 
 const router = Router()
 
@@ -153,7 +154,7 @@ router.delete('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   res.status(204).send()
 })
 // Export policy content, optionally uploading to S3 when configured.
-router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/export', authMiddleware, requireActiveSubscription, async (req: AuthedRequest, res) => {
   const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
   const content = doc.content || ''
@@ -287,7 +288,7 @@ Contracts restrict use of personal information to business purpose.
 })
 
 // AI-assisted draft generation (optional)
-router.post('/:id/generate', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/generate', authMiddleware, requireActiveSubscription, async (req: AuthedRequest, res) => {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return res.status(501).json({ error: 'AI generation not configured' })
 
