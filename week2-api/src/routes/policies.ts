@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
+import { logActivity } from '../utils/activity'
 
 const router = Router()
 
@@ -113,6 +114,7 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
     base.versions = [{ content: parsed.data.content, note: 'initial draft', createdAt: new Date() }]
   }
   const created = await Policy.create(base)
+  await logActivity(req.userId, 'Policy', created._id, 'create', { name: created.name })
   res.status(201).json({ id: created.id })
 })
 
@@ -139,12 +141,15 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  await logActivity(req.userId, 'Policy', req.params.id, 'update', { fields: Object.keys((parsed.data as any) || {}), note })
   res.json({ id: updated.id })
 })
 
 router.delete('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   const deleted = await Policy.findOneAndDelete({ _id: req.params.id, userId: req.userId })
   if (!deleted) return res.status(404).json({ error: 'Not found' })
+  const deletedName = (deleted as any)?.name
+  await logActivity(req.userId, 'Policy', req.params.id, 'delete', { name: deletedName })
   res.status(204).send()
 })
 // Export policy content, optionally uploading to S3 when configured.
@@ -163,11 +168,14 @@ router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
       const key = `policies/${String(req.userId)}/${String(doc._id)}.txt`
       await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: content, ContentType: 'text/plain' }))
       const url = `https://${bucket}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
+      await logActivity(req.userId, 'Policy', req.params.id, 'export', { storage: 's3', key })
       return res.json({ ok: true, url })
     } catch (e) {
+      await logActivity(req.userId, 'Policy', req.params.id, 'export', { storage: 'inline', error: 's3_failed' })
       return res.json({ ok: true, error: 'S3 upload failed or SDK not installed', content })
     }
   }
+  await logActivity(req.userId, 'Policy', req.params.id, 'export', { storage: 'inline' })
   res.json({ ok: true, content })
 })
 
@@ -179,6 +187,7 @@ router.post('/:id/submit-review', authMiddleware, async (req: AuthedRequest, res
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  await logActivity(req.userId, 'Policy', req.params.id, 'status_change', { status: 'In Review' })
   res.json({ id: updated.id, status: updated.status })
 })
 
@@ -191,6 +200,7 @@ router.post('/:id/approve', authMiddleware, async (req: AuthedRequest, res) => {
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  await logActivity(req.userId, 'Policy', req.params.id, 'status_change', { status: 'Approved' })
   res.json({ id: updated.id, status: updated.status })
 })
 
@@ -272,6 +282,7 @@ Contracts restrict use of personal information to business purpose.
 
   const existing = parsed.data.existingContent?.trim()
   const out = existing ? `${existing}\n\n${content}` : content
+  await logActivity(req.userId, 'Policy', 'template', 'generate', { template: t })
   res.json({ content: out })
 })
 
@@ -333,6 +344,7 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
     policy.versions = policy.versions || []
     policy.versions.push({ content, note: 'ai generated draft', createdAt: new Date() })
     await policy.save()
+    await logActivity(req.userId, 'Policy', req.params.id, 'generate', { model })
 
     res.json({ content })
   } catch (e: any) {
