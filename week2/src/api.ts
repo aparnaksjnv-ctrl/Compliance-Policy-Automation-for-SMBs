@@ -249,6 +249,24 @@ export const api = {
     return request<{ items: Activity[] }>(`/activities?${qs.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
   },
 
+  // Billing
+  async getBillingStatus(token: string) {
+    return request<BillingStatus>(`/billing/status`, { headers: { Authorization: `Bearer ${token}` } })
+  },
+  async createCheckout(token: string, priceId?: string) {
+    return request<{ url: string }>(`/billing/create-checkout`, {
+      method: 'POST',
+      body: JSON.stringify(priceId ? { priceId } : {}),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async openBillingPortal(token: string) {
+    return request<{ url: string }>(`/billing/portal`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+
   // Week 4: Vendors
   async listVendors(
     token: string,
@@ -340,6 +358,14 @@ export type Activity = {
   action: ActivityAction
   metadata?: Record<string, unknown>
   createdAt: string
+}
+
+// Billing types
+export type BillingStatus = {
+  status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid' | 'none'
+  stripeCustomerId?: string
+  stripeSubscriptionId?: string
+  publishableKey?: string
 }
 
 // Week 4: Vendor types

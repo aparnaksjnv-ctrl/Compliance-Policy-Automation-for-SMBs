@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api, type Activity, type EntityType, type ActivityAction } from '../api'
+import { api, type Activity, type EntityType, type ActivityAction, type BillingStatus } from '../api'
 
 export function Settings({ token }: { token: string }) {
   const [entityType, setEntityType] = useState<EntityType | ''>('')
@@ -18,9 +18,28 @@ export function Settings({ token }: { token: string }) {
     }),
   })
 
+  const billingQ = useQuery<BillingStatus>({
+    queryKey: ['billing-status'],
+    queryFn: () => api.getBillingStatus(token),
+  })
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>Settings</div>
+
+      <section style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10 }}>
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>Billing</div>
+        {billingQ.isFetching ? <div style={{ color: '#94a3b8' }}>Loading…</div> : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div>Status: <b>{billingQ.data?.status || 'none'}</b></div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={async () => { try { const r = await api.createCheckout(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Checkout failed')) } }}>Start/Manage Subscription</button>
+              <button onClick={async () => { try { const r = await api.openBillingPortal(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Portal failed')) } }}>Open Billing Portal</button>
+              <button onClick={() => billingQ.refetch()} disabled={billingQ.isFetching}>Refresh</button>
+            </div>
+          </div>
+        )}
+      </section>
 
       <section style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10 }}>
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Audit Logs</div>
