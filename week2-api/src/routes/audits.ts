@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
+import { logActivity } from '../utils/activity'
 import { Audit, AuditStatus } from '../models/Audit'
 
 const router = Router()
@@ -43,6 +44,7 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
     if (!isNaN(dt.getTime())) base.dueDate = dt
   }
   const created = await Audit.create(base)
+  await logActivity(req.userId, 'Audit', created._id, 'create', { name, status: created.status, dueDate: created.dueDate })
   res.status(201).json({ id: created.id })
 })
 
@@ -71,6 +73,11 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  if (Object.prototype.hasOwnProperty.call(parsed.data, 'status')) {
+    await logActivity(req.userId, 'Audit', req.params.id, 'status_change', { status: (parsed.data as any).status })
+  } else {
+    await logActivity(req.userId, 'Audit', req.params.id, 'update', { fields: Object.keys((parsed.data as any) || {}) })
+  }
   res.json({ id: updated.id })
 })
 
@@ -98,6 +105,7 @@ router.post('/:id/findings', authMiddleware, async (req: AuthedRequest, res) => 
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   const newId = updated.findings[updated.findings.length - 1]._id
+  await logActivity(req.userId, 'Audit', req.params.id, 'update', { op: 'add_finding', findingId: String(newId), severity: parsed.data.severity })
   res.status(201).json({ id: String(newId) })
 })
 
@@ -121,6 +129,7 @@ router.put('/:id/findings/:fid', authMiddleware, async (req: AuthedRequest, res)
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  await logActivity(req.userId, 'Audit', req.params.id, 'update', { op: 'update_finding', findingId: req.params.fid, fields: Object.keys((parsed.data as any) || {}) })
   res.json({ id: req.params.fid })
 })
 

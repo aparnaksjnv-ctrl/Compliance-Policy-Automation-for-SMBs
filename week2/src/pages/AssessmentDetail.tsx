@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type React from 'react'
 import { api, Assessment, AssessmentItem, AssessmentStatus, Framework, RiskSeverity, ItemResponse } from '../api'
 import toast from 'react-hot-toast'
+import { exportElementToPdf } from '../utils/pdf'
 
 export function AssessmentDetail({ token }: { token: string }) {
   const { id = '' } = useParams()
@@ -45,6 +46,7 @@ export function AssessmentDetail({ token }: { token: string }) {
   }
 
   const a = assessQ.data
+  const pdfRef = useRef<HTMLDivElement>(null)
   if (assessQ.isFetching && !a) return <div style={{ color: '#94a3b8' }}>Loading…</div>
   if (assessQ.error) return <div style={{ color: '#fca5a5' }}>{String((assessQ.error as any)?.message || 'Failed to load')}</div>
   if (!a) return null
@@ -57,7 +59,7 @@ export function AssessmentDetail({ token }: { token: string }) {
   const canComplete = total > 0 && (a.items || []).every(i => i.response !== 'N/A')
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
+    <div ref={pdfRef} style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700 }}>{a.name}</div>
@@ -68,6 +70,7 @@ export function AssessmentDetail({ token }: { token: string }) {
           {a.status !== 'Draft' && <button onClick={() => setStatus('Draft')}>Mark Draft</button>}
           {a.status !== 'In Progress' && <button onClick={() => setStatus('In Progress')}>Start</button>}
           {a.status !== 'Completed' && canComplete && <button onClick={() => setStatus('Completed')}>Complete</button>}
+          <button onClick={() => { const el = pdfRef.current; if (el) exportElementToPdf(el, `${a.name}-assessment.pdf`) }}>Export PDF</button>
         </div>
       </div>
 

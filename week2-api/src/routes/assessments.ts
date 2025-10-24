@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
+import { logActivity } from '../utils/activity'
 import { Assessment, AssessmentStatus } from '../models/Assessment'
 
 const router = Router()
@@ -41,6 +42,7 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
     if (!isNaN(dt.getTime())) base.dueDate = dt
   }
   const created = await Assessment.create(base)
+  await logActivity(req.userId, 'Assessment', created._id, 'create', { name, framework, status: created.status, dueDate: created.dueDate })
   res.status(201).json({ id: created.id })
 })
 
@@ -69,6 +71,11 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  if (Object.prototype.hasOwnProperty.call(parsed.data, 'status')) {
+    await logActivity(req.userId, 'Assessment', req.params.id, 'status_change', { status: (parsed.data as any).status })
+  } else {
+    await logActivity(req.userId, 'Assessment', req.params.id, 'update', { fields: Object.keys((parsed.data as any) || {}) })
+  }
   res.json({ id: updated.id })
 })
 
@@ -95,6 +102,7 @@ router.post('/:id/items', authMiddleware, async (req: AuthedRequest, res) => {
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   const newId = updated.items[updated.items.length - 1]._id
+  await logActivity(req.userId, 'Assessment', req.params.id, 'update', { op: 'add_item', itemId: String(newId), severity: parsed.data.severity })
   res.status(201).json({ id: String(newId) })
 })
 
@@ -118,6 +126,7 @@ router.put('/:id/items/:iid', authMiddleware, async (req: AuthedRequest, res) =>
     { new: true }
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
+  await logActivity(req.userId, 'Assessment', req.params.id, 'update', { op: 'update_item', itemId: req.params.iid, fields: Object.keys((parsed.data as any) || {}) })
   res.json({ id: req.params.iid })
 })
 

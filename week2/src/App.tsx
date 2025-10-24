@@ -66,7 +66,7 @@ export default function App() {
         <Route path="/assessments" element={<Protected authed={!!token}><Assessments token={token} /></Protected>} />
         <Route path="/assessments/:id" element={<Protected authed={!!token}><AssessmentDetail token={token} /></Protected>} />
         <Route path="/vendors" element={<Protected authed={!!token}><Vendors token={token} /></Protected>} />
-        <Route path="/settings" element={<Protected authed={!!token}><Settings /></Protected>} />
+        <Route path="/settings" element={<Protected authed={!!token}><Settings token={token} /></Protected>} />
         <Route path="*" element={<Navigate to={token ? '/' : '/login'} replace />} />
       </Routes>
     </div>

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import DOMPurify from 'dompurify'
 import { diffWords } from 'diff'
 import type { Change } from 'diff'
+import { exportElementToPdf } from '../utils/pdf'
 
 export function PolicyDetail({ token }: { token: string }) {
   const { id = '' } = useParams()
@@ -39,6 +40,7 @@ export function PolicyDetail({ token }: { token: string }) {
   // Rich text editor (Quill)
   const editorEl = useRef<HTMLDivElement>(null)
   const quill = useRef<any>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const Q = (window as any).Quill
     if (editorEl.current && Q && !quill.current) {
@@ -213,6 +215,13 @@ export function PolicyDetail({ token }: { token: string }) {
             <input type="file" accept="application/json" onChange={onCompanyFile} />
             <button type="button" onClick={() => genTemplates.mutate()} disabled={genTemplates.isPending}>Generate (template)</button>
             <button type="button" onClick={() => exp.mutate()} disabled={exp.isPending}>Export</button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = previewRef.current
+                if (el) exportElementToPdf(el, `${(form.name || data?.name || 'policy')}.pdf`)
+              }}
+            >Export PDF</button>
           </div>
           <div ref={editorEl} style={{ background: '#111827', color: '#e5e7eb', border: '1px solid var(--border)', borderRadius: 8 }} />
         </div>
@@ -251,7 +260,7 @@ export function PolicyDetail({ token }: { token: string }) {
         </div>
 
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Preview (sanitized)</div>
-        <div style={{ border: '1px solid #1f2937', padding: 12, borderRadius: 8, marginBottom: 16 }}
+        <div ref={previewRef} style={{ border: '1px solid #1f2937', padding: 12, borderRadius: 8, marginBottom: 16 }}
              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.content || '') }} />
 
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Versions</div>
