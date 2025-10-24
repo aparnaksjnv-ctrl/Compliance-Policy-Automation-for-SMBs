@@ -6,6 +6,7 @@ import { Parser as Json2CsvParser } from 'json2csv'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { vendorCreateSchema, vendorUpdateSchema, Vendor, RiskLevel, ComplianceStatus } from '../models/Vendor'
 import * as store from '../store/vendorsStore'
+import { logActivity } from '../utils/activity'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,6 +65,7 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   const parsed = vendorCreateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const id = await store.create(userId, parsed.data as any)
+  await logActivity(userId, 'Vendor', id, 'create', { name: (parsed.data as any).name })
   res.status(201).json({ id })
 })
 
@@ -73,6 +75,7 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const ok = await store.update(userId, req.params.id, parsed.data as any)
   if (!ok) return res.status(404).json({ error: 'Not found' })
+  await logActivity(userId, 'Vendor', req.params.id, 'update', { fields: Object.keys((parsed.data as any) || {}) })
   res.json({ id: req.params.id })
 })
 
@@ -80,6 +83,7 @@ router.delete('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const ok = await store.remove(userId, req.params.id)
   if (!ok) return res.status(404).json({ error: 'Not found' })
+  await logActivity(userId, 'Vendor', req.params.id, 'delete')
   res.json({ ok: true })
 })
 
@@ -116,6 +120,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: Authed
     })
 
     const result = await store.upsertMany(userId, rows, 'name')
+    await logActivity(userId, 'Vendor', 'bulk', 'update', { op: 'bulk_upsert', rows: rows.length, ...result })
     res.json(result)
   } catch (e: any) {
     res.status(400).json({ error: e?.message || 'Failed to import CSV' })
@@ -125,6 +130,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: Authed
 router.get('/export', authMiddleware, async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const items = await store.listByUser(userId)
+  await logActivity(userId, 'Vendor', 'csv', 'export', { count: items.length })
   const fields = [
     { label: 'Vendor Name', value: 'name' },
     { label: 'Service Type', value: 'serviceType' },
@@ -142,6 +148,7 @@ router.get('/export', authMiddleware, async (req: AuthedRequest, res) => {
 })
 
 router.get('/template', authMiddleware, async (_req: AuthedRequest, res) => {
+  await logActivity((_req as any).userId, 'Vendor', 'template', 'export')
   const fields = [
     { label: 'Vendor Name', value: 'name' },
     { label: 'Service Type', value: 'serviceType' },
