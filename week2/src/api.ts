@@ -246,7 +246,13 @@ export const api = {
     if (params?.action) qs.set('action', params.action)
     if (params?.entityId) qs.set('entityId', params.entityId)
     if (params?.limit) qs.set('limit', String(params.limit))
-    return request<{ items: Activity[] }>(`/activities?${qs.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+    try {
+      return await request<{ items: Activity[] }>(`/activities?${qs.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+    } catch (e: any) {
+      const msg = String(e?.message || '')
+      if (msg.startsWith('404')) return { items: [] }
+      throw e
+    }
   },
 
   // Billing

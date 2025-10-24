@@ -1,6 +1,6 @@
 export async function exportElementToPdf(el: HTMLElement, filename: string) {
   if (!el) return
-  const mod: any = await import('html2pdf.js')
+  const mod: any = await import('html2pdf.js/dist/html2pdf.bundle.min.js')
   const html2pdf = mod.default || mod
   const opt = {
     margin:       10,
