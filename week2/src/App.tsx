@@ -36,8 +36,8 @@ export default function App() {
 
   return (
     <div className="container">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
+      <div className="navbar">
+        <h1 className="brand">Compliance & Policy Automation for SMBs</h1>
         {token && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => navigate('/')}>Home</button>
@@ -47,7 +47,7 @@ export default function App() {
             <button className="btn" onClick={onSignOut}>Sign out</button>
           </div>
         )}
-      </header>
+      </div>
       <Routes>
         <Route
           path="/login"
