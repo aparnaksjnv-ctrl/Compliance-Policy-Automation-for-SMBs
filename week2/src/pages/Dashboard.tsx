@@ -101,28 +101,40 @@ export function Dashboard({ token }: { token: string }) {
           <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 16 }}>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
+            <div className="card">
               <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>OPEN ISSUES</div>
               <div style={{ fontSize: 28, fontWeight: 800 }}>{openFindings}</div>
               <div style={{ color: '#94a3b8' }}>Open findings</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
+            <div className="card">
               <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>POLICY COVERAGE</div>
               <div style={{ fontSize: 28, fontWeight: 800 }}>{coverage}%</div>
               <div style={{ color: '#94a3b8' }}>Target 95%</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
+            <div className="card">
               <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>UPCOMING AUDITS</div>
               <div style={{ fontSize: 22, fontWeight: 700 }}>{upcoming.count}</div>
               <div style={{ color: '#94a3b8' }}>Next: {upcoming.next}</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
+            <div className="card">
               <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>ASSESSMENTS</div>
               <div style={{ fontSize: 28, fontWeight: 800 }}>{completedAssessments}/{totalAssessments}</div>
               <div style={{ color: '#94a3b8' }}>Completed assessments</div>
             </div>
           </div>
         )}
+
+        {/* Quick actions */}
+        <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontWeight: 600 }}>Quick Actions</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn" onClick={() => navigate('/policies/new')}>New Policy</button>
+            <button className="btn" onClick={() => navigate('/audits')}>View Audits</button>
+            <button className="btn" onClick={() => navigate('/assessments')}>View Assessments</button>
+            <button className="btn" onClick={() => navigate('/vendors')}>Vendors</button>
+            <button className="btn" onClick={() => navigate('/settings')}>Settings</button>
+          </div>
+        </div>
       </section>
     </div>
   )
