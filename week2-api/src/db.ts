@@ -1,12 +1,29 @@
 import mongoose from 'mongoose'
 import { config, assertNonEmptyString } from './config'
 import { MongoMemoryServer } from 'mongodb-memory-server'
+import path from 'path'
 
 let mem: MongoMemoryServer | null = null
 
 export async function connectDB() {
   if (config.useInMemory) {
-    mem = await MongoMemoryServer.create()
+    const persistPath = process.env.MEMORY_DB_PERSIST_PATH
+    if (persistPath) {
+      const dbPath = path.isAbsolute(persistPath) ? persistPath : path.join(process.cwd(), persistPath)
+      mem = await MongoMemoryServer.create({
+        instance: {
+          dbName: 'cpa_week2',
+          dbPath,
+          storageEngine: 'wiredTiger',
+        },
+      })
+      // eslint-disable-next-line no-console
+      console.log(`[week2-api] In-memory MongoDB with persistence: ${dbPath}`)
+    } else {
+      mem = await MongoMemoryServer.create()
+      // eslint-disable-next-line no-console
+      console.log('[week2-api] In-memory MongoDB (ephemeral)')
+    }
     const uri = mem.getUri()
     await mongoose.connect(uri)
   } else {

@@ -27,21 +27,21 @@ export function Settings({ token }: { token: string }) {
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>Settings</div>
 
-      <section style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10 }}>
+      <section className="card">
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Billing</div>
         {billingQ.isFetching ? <div style={{ color: '#94a3b8' }}>Loading…</div> : (
           <div style={{ display: 'grid', gap: 8 }}>
             <div>Status: <b>{billingQ.data?.status || 'none'}</b></div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={async () => { try { const r = await api.createCheckout(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Checkout failed')) } }}>Start/Manage Subscription</button>
-              <button onClick={async () => { try { const r = await api.openBillingPortal(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Portal failed')) } }}>Open Billing Portal</button>
-              <button onClick={() => billingQ.refetch()} disabled={billingQ.isFetching}>Refresh</button>
+              <button className="btn" onClick={async () => { try { const r = await api.createCheckout(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Checkout failed')) } }}>Start/Manage Subscription</button>
+              <button className="btn" onClick={async () => { try { const r = await api.openBillingPortal(token); window.location.href = r.url } catch (e: any) { alert(String(e?.message || 'Portal failed')) } }}>Open Billing Portal</button>
+              <button className="btn" onClick={() => billingQ.refetch()} disabled={billingQ.isFetching}>Refresh</button>
             </div>
           </div>
         )}
       </section>
 
-      <section style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10 }}>
+      <section className="card">
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Audit Logs</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
           <select value={entityType} onChange={e => setEntityType(e.target.value as EntityType | '')}>
@@ -62,7 +62,7 @@ export function Settings({ token }: { token: string }) {
           </select>
           <input placeholder="Entity ID (optional)" value={entityId} onChange={e => setEntityId(e.target.value)} />
           <input type="number" min={10} max={500} value={limit} onChange={e => setLimit(Math.max(10, Math.min(500, Number(e.target.value||200))))} />
-          <button type="button" onClick={() => q.refetch()} disabled={q.isFetching}>Refresh</button>
+          <button type="button" className="btn" onClick={() => q.refetch()} disabled={q.isFetching}>Refresh</button>
         </div>
 
         {q.isFetching && <div style={{ color: '#94a3b8' }}>Loading…</div>}
