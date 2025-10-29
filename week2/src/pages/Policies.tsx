@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type React from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -49,6 +49,19 @@ export function Policies({ token }: { token: string }) {
   })
 
   const items = data?.items || []
+  const [sort, setSort] = useState<{ key: 'name' | 'owner' | 'framework' | 'status'; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' })
+  function toggleSort(key: 'name' | 'owner' | 'framework' | 'status') {
+    setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
+  }
+  const sortedItems = useMemo(() => {
+    const arr = [...items]
+    arr.sort((a, b) => {
+      const av = String((a as any)[sort.key] || '')
+      const bv = String((b as any)[sort.key] || '')
+      return sort.dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
+    })
+    return arr
+  }, [items, sort])
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -106,40 +119,38 @@ export function Policies({ token }: { token: string }) {
         </div>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Name</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Owner</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Framework</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Status</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}></th>
+          <tr>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('name')}>Name {sort.key==='name' ? (sort.dir==='asc' ? '↑' : '↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('owner')}>Owner {sort.key==='owner' ? (sort.dir==='asc' ? '↑' : '↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('framework')}>Framework {sort.key==='framework' ? (sort.dir==='asc' ? '↑' : '↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>Status {sort.key==='status' ? (sort.dir==='asc' ? '↑' : '↓') : ''}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
-              {Array.from({ length: 5 }).map((_, j) => (
-                <td key={j} style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                  <div style={{ height: 14, background: '#111827', borderRadius: 6, opacity: 0.6, width: j===0? '60%': j===1? '40%': '30%' }} />
-                </td>
-              ))}
+              <td colSpan={5}>
+                <div className="skeleton" style={{ height: 14, borderRadius: 6 }} />
+              </td>
             </tr>
           ))}
-          {items.map(p => (
+          {sortedItems.map(p => (
             <tr key={p.id || p._id}>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}><Link to={`/policies/${p.id || p._id}`}>{p.name}</Link></td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.owner}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.framework || '-'}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.status}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
+              <td><Link to={`/policies/${p.id || p._id}`}>{p.name}</Link></td>
+              <td>{p.owner}</td>
+              <td>{p.framework || '-'}</td>
+              <td>{p.status}</td>
+              <td>
                 <button onClick={() => del.mutate(p.id || p._id!)} disabled={del.isPending}>Delete</button>
               </td>
             </tr>
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ padding: '12px 6px', color: '#94a3b8' }}>No policies yet</td>
+              <td colSpan={5} style={{ padding: 12, color: '#94a3b8' }}>No policies yet</td>
             </tr>
           )}
         </tbody>

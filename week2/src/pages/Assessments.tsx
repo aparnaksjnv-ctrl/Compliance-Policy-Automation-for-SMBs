@@ -45,6 +45,10 @@ export function Assessments({ token }: { token: string }) {
   })
 
   const items = listQ.data?.items || []
+  const [sort, setSort] = useState<{ key: 'name' | 'owner' | 'framework' | 'dueDate' | 'status' | 'progress'; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' })
+  function toggleSort(key: 'name' | 'owner' | 'framework' | 'dueDate' | 'status' | 'progress') {
+    setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
+  }
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -65,6 +69,24 @@ export function Assessments({ token }: { token: string }) {
     const no = (a.items || []).filter(i => i.response === 'No').length
     return { total, yes, no }
   }
+
+  const sortedItems = useMemo(() => {
+    const arr = [...items]
+    arr.sort((a, b) => {
+      let av: string | number = ''
+      let bv: string | number = ''
+      if (sort.key === 'progress') {
+        const ca = counts(a); const cb = counts(b)
+        const ap = ca.total ? (ca.yes / ca.total) : 0
+        const bp = cb.total ? (cb.yes / cb.total) : 0
+        av = ap; bv = bp
+      } else if (sort.key === 'dueDate') { av = a.dueDate || ''; bv = b.dueDate || '' }
+      else { av = String((a as any)[sort.key] || ''); bv = String((b as any)[sort.key] || '') }
+      if (typeof av === 'number' && typeof bv === 'number') return sort.dir === 'asc' ? av - bv : bv - av
+      return sort.dir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
+    })
+    return arr
+  }, [items, sort])
 
   return (
     <div>
@@ -110,43 +132,39 @@ export function Assessments({ token }: { token: string }) {
         </div>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Name</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Owner</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Framework</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Due</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Status</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Progress</th>
+          <tr>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('name')}>Name {sort.key==='name' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('owner')}>Owner {sort.key==='owner' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('framework')}>Framework {sort.key==='framework' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('dueDate')}>Due {sort.key==='dueDate' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>Status {sort.key==='status' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('progress')}>Progress {sort.key==='progress' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
           </tr>
         </thead>
         <tbody>
           {listQ.isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
-              {Array.from({ length: 6 }).map((_, j) => (
-                <td key={j} style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                  <div style={{ height: 14, background: '#111827', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
-                </td>
-              ))}
+              <td colSpan={6}><div className="skeleton" style={{ height: 14, borderRadius: 6 }} /></td>
             </tr>
           ))}
-          {items.map(a => {
+          {sortedItems.map(a => {
             const c = counts(a)
             return (
               <tr key={a.id || a._id}>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}><Link to={`/assessments/${a.id || a._id}`}>{a.name}</Link></td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.owner}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.framework || '-'}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.status}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{c.yes}/{c.total} Yes ({c.no} No)</td>
+                <td><Link to={`/assessments/${a.id || a._id}`}>{a.name}</Link></td>
+                <td>{a.owner}</td>
+                <td>{a.framework || '-'}</td>
+                <td>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
+                <td>{a.status}</td>
+                <td>{c.yes}/{c.total} Yes ({c.no} No)</td>
               </tr>
             )
           })}
           {items.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ padding: '12px 6px', color: '#94a3b8' }}>No assessments yet</td>
+              <td colSpan={6} style={{ padding: 12, color: '#94a3b8' }}>No assessments yet</td>
             </tr>
           )}
         </tbody>

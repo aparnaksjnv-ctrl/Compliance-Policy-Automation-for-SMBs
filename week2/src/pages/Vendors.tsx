@@ -86,6 +86,31 @@ export function Vendors({ token }: { token: string }) {
   function openEdit(v: Vendor) { setEditing(v); setForm({ ...v }) }
 
   const filtered = useMemo(() => rows, [rows])
+  const [sort, setSort] = useState<{ key: 'name' | 'serviceType' | 'riskLevel' | 'status' | 'lastAuditDate'; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' })
+  function toggleSort(key: 'name' | 'serviceType' | 'riskLevel' | 'status' | 'lastAuditDate') {
+    setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
+  }
+  const sortedRows = useMemo(() => {
+    const arr = [...filtered]
+    const riskOrder: Record<string, number> = { Low: 0, Medium: 1, High: 2 }
+    arr.sort((a, b) => {
+      let av: string | number = ''
+      let bv: string | number = ''
+      if (sort.key === 'lastAuditDate') {
+        av = a.lastAuditDate ? new Date(a.lastAuditDate).getTime() : 0
+        bv = b.lastAuditDate ? new Date(b.lastAuditDate).getTime() : 0
+      } else if (sort.key === 'riskLevel') {
+        av = riskOrder[String(a.riskLevel || '')] ?? 99
+        bv = riskOrder[String(b.riskLevel || '')] ?? 99
+      } else {
+        av = String((a as any)[sort.key] || '')
+        bv = String((b as any)[sort.key] || '')
+      }
+      if (typeof av === 'number' && typeof bv === 'number') return sort.dir === 'asc' ? av - bv : bv - av
+      return sort.dir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
+    })
+    return arr
+  }, [filtered, sort])
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
@@ -110,21 +135,26 @@ export function Vendors({ token }: { token: string }) {
         </div>
       </div>
 
-      {loading ? <div style={{ color: '#94a3b8' }}>Loading…</div> : err ? <div style={{ color: '#fca5a5' }}>{err}</div> : (
+      {err ? <div style={{ color: '#fca5a5' }}>{err}</div> : (
         <table className="table">
           <thead>
             <tr>
-              <th>Vendor Name</th>
-              <th>Service Type</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('name')}>Vendor Name {sort.key==='name' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('serviceType')}>Service Type {sort.key==='serviceType' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
               <th>Compliance Standards</th>
-              <th>Risk Level</th>
-              <th>Status</th>
-              <th>Last Audit Date</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('riskLevel')}>Risk Level {sort.key==='riskLevel' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>Status {sort.key==='status' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('lastAuditDate')}>Last Audit Date {sort.key==='lastAuditDate' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(v => (
+            {loading && sortedRows.length === 0 && [0,1,2].map(i => (
+              <tr key={`sk-${i}`}>
+                <td colSpan={7}><div className="skeleton" style={{ height: 14, borderRadius: 6 }} /></td>
+              </tr>
+            ))}
+            {sortedRows.map(v => (
               <tr key={v.id}>
                 <td>{v.name}</td>
                 <td>{v.serviceType || '—'}</td>

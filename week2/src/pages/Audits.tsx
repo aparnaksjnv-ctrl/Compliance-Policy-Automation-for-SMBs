@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type React from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -43,6 +43,23 @@ export function Audits({ token }: { token: string }) {
   })
 
   const items = data?.items || []
+  const [sort, setSort] = useState<{ key: 'name' | 'owner' | 'dueDate' | 'status' | 'open'; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' })
+  function toggleSort(key: 'name' | 'owner' | 'dueDate' | 'status' | 'open') {
+    setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
+  }
+  const sortedItems = useMemo(() => {
+    const arr = [...items]
+    arr.sort((a, b) => {
+      let av: string | number = ''
+      let bv: string | number = ''
+      if (sort.key === 'open') { av = (a.findings || []).filter(f => f.status === 'Open').length; bv = (b.findings || []).filter(f => f.status === 'Open').length }
+      else if (sort.key === 'dueDate') { av = a.dueDate || ''; bv = b.dueDate || '' }
+      else { av = String((a as any)[sort.key] || ''); bv = String((b as any)[sort.key] || '') }
+      if (typeof av === 'number' && typeof bv === 'number') return sort.dir === 'asc' ? av - bv : bv - av
+      return sort.dir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
+    })
+    return arr
+  }, [items, sort])
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -91,38 +108,34 @@ export function Audits({ token }: { token: string }) {
         </div>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Name</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Owner</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Due</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Status</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Open findings</th>
+          <tr>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('name')}>Name {sort.key==='name' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('owner')}>Owner {sort.key==='owner' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('dueDate')}>Due {sort.key==='dueDate' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>Status {sort.key==='status' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('open')}>Open findings {sort.key==='open' ? (sort.dir==='asc'?'↑':'↓') : ''}</th>
           </tr>
         </thead>
         <tbody>
           {isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
-              {Array.from({ length: 5 }).map((_, j) => (
-                <td key={j} style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                  <div style={{ height: 14, background: '#111827', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
-                </td>
-              ))}
+              <td colSpan={5}><div className="skeleton" style={{ height: 14, borderRadius: 6 }} /></td>
             </tr>
           ))}
-          {items.map(a => (
+          {sortedItems.map(a => (
             <tr key={a.id || a._id}>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}><Link to={`/audits/${a.id || a._id}`}>{a.name}</Link></td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.owner}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.status}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{openCount(a)}</td>
+              <td><Link to={`/audits/${a.id || a._id}`}>{a.name}</Link></td>
+              <td>{a.owner}</td>
+              <td>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
+              <td>{a.status}</td>
+              <td>{openCount(a)}</td>
             </tr>
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ padding: '12px 6px', color: '#94a3b8' }}>No audits yet</td>
+              <td colSpan={5} style={{ padding: 12, color: '#94a3b8' }}>No audits yet</td>
             </tr>
           )}
         </tbody>
