@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { Sparkline } from '../components/Sparkline'
+import { FileIcon, RefreshIcon, SettingsIcon, RocketIcon } from '../components/Icons'
 
 export function Dashboard({ token }: { token: string }) {
   const navigate = useNavigate()
@@ -25,6 +27,7 @@ export function Dashboard({ token }: { token: string }) {
   const [search, setSearch] = useState('')
   const audits = auditsQ.data?.items ?? []
   const openFindings = useMemo(() => audits.reduce((acc, a) => acc + ((a.findings || []).filter(f => f.status === 'Open').length), 0), [audits])
+  const openTrend = useMemo(() => audits.map(a => (a.findings || []).filter(f => f.status === 'Open').length), [audits])
   const upcoming = useMemo(() => {
     const now = Date.now()
     const soon = now + 30 * 86400000
@@ -37,6 +40,18 @@ export function Dashboard({ token }: { token: string }) {
   const assessments = assessmentsQ.data?.items ?? []
   const completedAssessments = useMemo(() => assessments.filter(a => a.status === 'Completed').length, [assessments])
   const totalAssessments = assessments.length
+  const coverageTrend = useMemo(() => {
+    let acc = 0
+    return items.map((p, i) => {
+      if (p.status === 'Approved') acc++
+      return Math.round((acc / (i + 1)) * 100)
+    })
+  }, [items])
+  const dueTrend = useMemo(() => audits.filter(a => a.dueDate).map(a => {
+    const days = Math.max(0, Math.round((new Date(a.dueDate as string).getTime() - Date.now()) / 86400000))
+    return Math.min(30, days)
+  }), [audits])
+  const assessTrend = useMemo(() => assessments.map(a => a.status === 'Completed' ? 100 : a.status === 'In Progress' ? 60 : 30), [assessments])
 
   const loc = useLocation()
 
@@ -101,25 +116,37 @@ export function Dashboard({ token }: { token: string }) {
           <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 16 }}>
-            <div className="card">
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>OPEN ISSUES</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{openFindings}</div>
-              <div style={{ color: '#94a3b8' }}>Open findings</div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>OPEN ISSUES</div>
+                <div style={{ fontSize: 28, fontWeight: 800 }}>{openFindings}</div>
+                <div style={{ color: '#94a3b8' }}>Open findings</div>
+              </div>
+              <Sparkline data={(openTrend.length ? openTrend : [openFindings]) as number[]} width={90} height={28} />
             </div>
-            <div className="card">
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>POLICY COVERAGE</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{coverage}%</div>
-              <div style={{ color: '#94a3b8' }}>Target 95%</div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>POLICY COVERAGE</div>
+                <div style={{ fontSize: 28, fontWeight: 800 }}>{coverage}%</div>
+                <div style={{ color: '#94a3b8' }}>Target 95%</div>
+              </div>
+              <Sparkline data={(coverageTrend.length ? coverageTrend : [coverage]) as number[]} width={90} height={28} />
             </div>
-            <div className="card">
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>UPCOMING AUDITS</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{upcoming.count}</div>
-              <div style={{ color: '#94a3b8' }}>Next: {upcoming.next}</div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>UPCOMING AUDITS</div>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>{upcoming.count}</div>
+                <div style={{ color: '#94a3b8' }}>Next: {upcoming.next}</div>
+              </div>
+              <Sparkline data={(dueTrend.length ? dueTrend : [upcoming.count]) as number[]} width={90} height={28} stroke="#eab308" />
             </div>
-            <div className="card">
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>ASSESSMENTS</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{completedAssessments}/{totalAssessments}</div>
-              <div style={{ color: '#94a3b8' }}>Completed assessments</div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>ASSESSMENTS</div>
+                <div style={{ fontSize: 28, fontWeight: 800 }}>{completedAssessments}/{totalAssessments}</div>
+                <div style={{ color: '#94a3b8' }}>Completed assessments</div>
+              </div>
+              <Sparkline data={(assessTrend.length ? assessTrend : [completedAssessments]) as number[]} width={90} height={28} stroke="#06b6d4" />
             </div>
           </div>
         )}
@@ -128,11 +155,11 @@ export function Dashboard({ token }: { token: string }) {
         <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontWeight: 600 }}>Quick Actions</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button className="btn" onClick={() => navigate('/policies/new')}>New Policy</button>
-            <button className="btn" onClick={() => navigate('/audits')}>View Audits</button>
-            <button className="btn" onClick={() => navigate('/assessments')}>View Assessments</button>
-            <button className="btn" onClick={() => navigate('/vendors')}>Vendors</button>
-            <button className="btn" onClick={() => navigate('/settings')}>Settings</button>
+            <button className="btn btn--primary" onClick={() => navigate('/policies/new')}> <FileIcon style={{ marginRight: 6 }} /> New Policy</button>
+            <button className="btn" onClick={() => navigate('/audits')}> <RefreshIcon style={{ marginRight: 6 }} /> View Audits</button>
+            <button className="btn" onClick={() => navigate('/assessments')}> <RefreshIcon style={{ marginRight: 6 }} /> View Assessments</button>
+            <button className="btn" onClick={() => navigate('/vendors')}> <RocketIcon style={{ marginRight: 6 }} /> Vendors</button>
+            <button className="btn" onClick={() => navigate('/settings')}> <SettingsIcon style={{ marginRight: 6 }} /> Settings</button>
           </div>
         </div>
       </section>
