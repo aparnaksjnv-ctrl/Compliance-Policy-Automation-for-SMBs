@@ -7,22 +7,30 @@ let mem: MongoMemoryServer | null = null
 
 export async function connectDB() {
   if (config.useInMemory) {
-    const persistPath = process.env.MEMORY_DB_PERSIST_PATH
-    if (persistPath) {
-      const dbPath = path.isAbsolute(persistPath) ? persistPath : path.join(process.cwd(), persistPath)
-      mem = await MongoMemoryServer.create({
-        instance: {
-          dbName: 'cpa_week2',
-          dbPath,
-          storageEngine: 'wiredTiger',
-        },
-      })
-      // eslint-disable-next-line no-console
-      console.log(`[week2-api] In-memory MongoDB with persistence: ${dbPath}`)
-    } else {
+    const raw = process.env.MEMORY_DB_PERSIST_PATH
+    const persistPath = raw && raw.trim()
+    try {
+      if (persistPath) {
+        const dbPath = path.isAbsolute(persistPath) ? persistPath : path.join(process.cwd(), persistPath)
+        mem = await MongoMemoryServer.create({
+          instance: {
+            dbName: 'cpa_week2',
+            dbPath,
+            storageEngine: 'wiredTiger',
+          },
+        })
+        // eslint-disable-next-line no-console
+        console.log(`[week2-api] In-memory MongoDB with persistence: ${dbPath}`)
+      } else {
+        mem = await MongoMemoryServer.create()
+        // eslint-disable-next-line no-console
+        console.log('[week2-api] In-memory MongoDB (ephemeral)')
+      }
+    } catch (e) {
+      // Fallback to ephemeral if persistence path fails
       mem = await MongoMemoryServer.create()
       // eslint-disable-next-line no-console
-      console.log('[week2-api] In-memory MongoDB (ephemeral)')
+      console.warn('[week2-api] Persistence path failed, falling back to ephemeral in-memory DB')
     }
     const uri = mem.getUri()
     await mongoose.connect(uri)

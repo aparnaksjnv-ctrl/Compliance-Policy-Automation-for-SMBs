@@ -27,7 +27,11 @@ router.get('/status', authMiddleware, async (req: AuthedRequest, res) => {
 
 router.post('/create-checkout', authMiddleware, async (req: AuthedRequest, res) => {
   try {
-    if (DEMO_MODE) {
+    const priceIdFromBody: string | undefined = (req.body && req.body.priceId) || undefined
+    const priceIdEnv = process.env.STRIPE_PRICE_ID || ''
+    const priceId = priceIdFromBody || priceIdEnv
+    const missingStripeConfig = !process.env.STRIPE_SECRET_KEY || !priceId
+    if (DEMO_MODE || missingStripeConfig) {
       const user = await User.findById(req.userId)
       if (!user) return res.status(401).json({ error: 'Unauthorized' })
       ;(user as any).subscriptionStatus = 'active'
@@ -37,7 +41,6 @@ router.post('/create-checkout', authMiddleware, async (req: AuthedRequest, res) 
       const successUrl = process.env.STRIPE_SUCCESS_URL || 'http://localhost:5174/?billing=success'
       return res.json({ url: successUrl })
     }
-    const priceId: string = (req.body && req.body.priceId) || process.env.STRIPE_PRICE_ID || ''
     if (!priceId) return res.status(400).json({ error: 'Missing STRIPE_PRICE_ID' })
 
     const stripe = await getStripe()
@@ -76,7 +79,8 @@ router.post('/create-checkout', authMiddleware, async (req: AuthedRequest, res) 
 
 router.post('/portal', authMiddleware, async (req: AuthedRequest, res) => {
   try {
-    if (DEMO_MODE) {
+    const missingStripeConfig = !process.env.STRIPE_SECRET_KEY
+    if (DEMO_MODE || missingStripeConfig) {
       const returnUrl = process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:5174/settings'
       return res.json({ url: returnUrl })
     }
