@@ -34,79 +34,6 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
   res.json({ items: list })
 })
 
-// Generate content for a policy using a selected template and optional company data.
-// This is a lightweight local generator. You can wire OpenAI/HF by replacing the generator below.
-router.post('/generate', authMiddleware, async (req: AuthedRequest, res) => {
-  const schema = z.object({
-    template: z.enum(['GDPR', 'HIPAA', 'CCPA']),
-    company: z.any().optional(),
-    existingContent: z.string().optional(),
-  })
-  const parsed = schema.safeParse(req.body)
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
-
-  const { template, company, existingContent } = parsed.data
-
-  function pick<T>(o: any, k: string, fallback: T): T { try { return (o && o[k]) ?? fallback } catch { return fallback } }
-  const companyName = pick<string>(company, 'name', 'Your Company')
-  const industry = pick<string>(company, 'industry', 'General')
-  const region = pick<string>(company, 'region', 'US')
-
-  const base: Record<'GDPR'|'HIPAA'|'CCPA', string> = {
-    GDPR: `GDPR Privacy Policy for ${companyName}
-
-Overview
-This policy describes how ${companyName} processes personal data in the ${region} and EU in accordance with GDPR.
-
-Data Collection
-- Categories: identification, contact, usage
-- Purposes: service delivery, security, analytics
-
-Lawful Basis
-- Contract, Legitimate Interests, Consent (where applicable)
-
-Data Subject Rights
-- Access, Rectification, Erasure, Restriction, Portability, Objection
-
-Security Measures
-- Encryption at rest and in transit; access control; logging; regular reviews
-
-Retention
-- Data retained only as long as necessary for ${industry} operations.
-`,
-    HIPAA: `HIPAA Policy for ${companyName}
-
-Overview
-This policy outlines safeguards for Protected Health Information (PHI) handled by ${companyName}.
-
-Administrative Safeguards
-- Risk analysis, workforce training, BAAs with vendors
-
-Physical Safeguards
-- Facility access controls, device/media controls
-
-Technical Safeguards
-- Access controls, audit controls, integrity, transmission security
-`,
-    CCPA: `CCPA Notice for ${companyName}
-
-Categories Collected
-- Identifiers, commercial information, internet activity
-
-Purposes
-- Service delivery, security, debugging, short-term transient use
-
-Consumer Rights
-- Right to know, delete, opt-out of sale/share, non-discrimination
-`,
-  }
-
-  const merged = `${base[template]}
-${existingContent ? `\n---\nExisting Notes\n${existingContent}` : ''}`
-
-  res.json({ content: merged })
-})
-
 router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   const parsed = policySchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
@@ -351,15 +278,6 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Generation failed' })
   }
-})
-
-// Export current policy content (simple text export)
-router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
-  const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
-  if (!policy) return res.status(404).json({ error: 'Not found' })
-  const content = String(policy.content || '')
-  // For simplicity return inline content; frontend will download as file
-  res.json({ ok: true, content })
 })
 
 export default router
