@@ -42,6 +42,20 @@ export function Settings({ token }: { token: string }) {
       </section>
 
       <section className="card">
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>Onboarding</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn" onClick={async () => {
+            try {
+              const r = await api.bootstrap(token)
+              alert(r.seeded ? 'Demo data created. Refresh your lists to view.' : 'Your account already has data.')
+            } catch (e: any) {
+              alert(String(e?.message || 'Bootstrap failed'))
+            }
+          }}>Load Demo Data</button>
+        </div>
+      </section>
+
+      <section className="card">
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Audit Logs</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
           <select value={entityType} onChange={e => setEntityType(e.target.value as EntityType | '')}>

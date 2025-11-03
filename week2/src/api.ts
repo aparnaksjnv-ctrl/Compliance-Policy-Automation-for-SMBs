@@ -273,6 +273,13 @@ export const api = {
     })
   },
 
+  async bootstrap(token: string) {
+    return request<{ ok: boolean; seeded: boolean }>(`/auth/bootstrap`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+
   // Week 4: Vendors
   async listVendors(
     token: string,
