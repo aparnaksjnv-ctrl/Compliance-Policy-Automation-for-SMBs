@@ -14,5 +14,131 @@
     "status": "Pending",
     "lastAuditDate": "2025-01-10",
     "notes": "Onboarding"
+  },
+  {
+    "id": "pk66sgu4idhmring3c5",
+    "userId": "6a54583abe632eed93c9a984",
+    "createdAt": "2026-07-13T03:15:06.340Z",
+    "updatedAt": "2026-07-13T03:45:50.369Z",
+    "name": "AWS",
+    "serviceType": "Cloud",
+    "standards": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "riskLevel": "Medium",
+    "status": "Compliant",
+    "lastAuditDate": "2026-07-13",
+    "notes": "PCA completed"
+  },
+  {
+    "id": "9hohwj699bqmring3c5",
+    "userId": "6a54583abe632eed93c9a984",
+    "createdAt": "2026-07-13T03:15:06.340Z",
+    "updatedAt": "2026-07-13T03:45:50.369Z",
+    "name": "Stripe",
+    "serviceType": "Payments",
+    "standards": [
+      "PCI DSS"
+    ],
+    "riskLevel": "Low",
+    "status": "Compliant"
+  },
+  {
+    "id": "xj1d6im1smmring3c5",
+    "userId": "6a54583abe632eed93c9a984",
+    "createdAt": "2026-07-13T03:15:06.340Z",
+    "updatedAt": "2026-07-13T03:15:06.340Z",
+    "name": "Acme Analytics",
+    "serviceType": "Analytics",
+    "standards": [
+      "GDPR"
+    ],
+    "riskLevel": "High",
+    "status": "Pending"
+  },
+  {
+    "id": "y6vvx6ku2yqmriocg21",
+    "userId": "6a545e1f91c60d5017b615c1",
+    "createdAt": "2026-07-13T03:40:15.817Z",
+    "updatedAt": "2026-07-13T03:40:15.817Z",
+    "name": "AWS",
+    "serviceType": "Cloud",
+    "standards": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "riskLevel": "Medium",
+    "status": "Compliant",
+    "lastAuditDate": "2026-07-13",
+    "notes": "PCA completed"
+  },
+  {
+    "id": "knqn10nt73fmriocg21",
+    "userId": "6a545e1f91c60d5017b615c1",
+    "createdAt": "2026-07-13T03:40:15.817Z",
+    "updatedAt": "2026-07-13T03:40:15.817Z",
+    "name": "Stripe",
+    "serviceType": "Payments",
+    "standards": [
+      "PCI DSS"
+    ],
+    "riskLevel": "Low",
+    "status": "Compliant"
+  },
+  {
+    "id": "i7qow2v8iymriocg21",
+    "userId": "6a545e1f91c60d5017b615c1",
+    "createdAt": "2026-07-13T03:40:15.817Z",
+    "updatedAt": "2026-07-13T03:40:15.817Z",
+    "name": "Acme Analytics",
+    "serviceType": "Analytics",
+    "standards": [
+      "GDPR"
+    ],
+    "riskLevel": "High",
+    "status": "Pending"
+  },
+  {
+    "id": "lrf37szrxusmriogui0",
+    "userId": "6a545eec09d6bb3f5dbe5561",
+    "createdAt": "2026-07-13T03:43:41.160Z",
+    "updatedAt": "2026-07-13T03:43:41.160Z",
+    "name": "AWS",
+    "serviceType": "Cloud",
+    "standards": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "riskLevel": "Medium",
+    "status": "Compliant",
+    "lastAuditDate": "2026-07-13",
+    "notes": "PCA completed"
+  },
+  {
+    "id": "v6101dpfmpimriogui0",
+    "userId": "6a545eec09d6bb3f5dbe5561",
+    "createdAt": "2026-07-13T03:43:41.160Z",
+    "updatedAt": "2026-07-13T03:43:41.160Z",
+    "name": "Stripe",
+    "serviceType": "Payments",
+    "standards": [
+      "PCI DSS"
+    ],
+    "riskLevel": "Low",
+    "status": "Compliant"
+  },
+  {
+    "id": "cmz7ofceg9mriogui0",
+    "userId": "6a545eec09d6bb3f5dbe5561",
+    "createdAt": "2026-07-13T03:43:41.160Z",
+    "updatedAt": "2026-07-13T03:43:41.160Z",
+    "name": "Acme Analytics",
+    "serviceType": "Analytics",
+    "standards": [
+      "GDPR"
+    ],
+    "riskLevel": "High",
+    "status": "Pending"
   }
 ]
