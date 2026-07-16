@@ -41,10 +41,15 @@ export default function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
         {token && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={() => navigate('/')}>Home</button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn" onClick={() => navigate('/')}>Dashboard</button>
+            <button className="btn" onClick={() => navigate('/policies')}>Policies</button>
+            <button className="btn" onClick={() => navigate('/vendors')}>Vendors</button>
+            <button className="btn" onClick={() => navigate('/assessments')}>Assessments</button>
+            <button className="btn" onClick={() => navigate('/audits')}>Audits</button>
             <button className="btn" onClick={() => navigate('/soc2')}>SOC 2</button>
             <button className="btn" onClick={() => navigate('/alerts')}>Alerts</button>
+            <button className="btn" onClick={() => navigate('/settings')}>Settings</button>
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/policies/new') }} style={{ textDecoration: 'none' }}>
               <button className="btn btn--primary">New Policy</button>
             </a>
