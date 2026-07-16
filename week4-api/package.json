@@ -5,7 +5,7 @@
   "type": "commonjs",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "cross-env PORT=5002 CORS_ORIGIN=http://localhost:5176 ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "cross-env PORT=5000 CORS_ORIGIN=http://localhost:5176 ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc -b",
     "start": "node dist/server.js",
     "test": "vitest"

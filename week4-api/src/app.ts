@@ -9,10 +9,20 @@ import policiesRouter from './routes/policies'
 import auditsRouter from './routes/audits'
 import assessmentsRouter from './routes/assessments'
 import vendorsRouter from './routes/vendors'
+import auditRouter from './routes/audit'
+import soc2Router from './routes/soc2'
+import riskRouter from './routes/risk'
+import alertsRouter from './routes/alerts'
 
 export const app = express()
 
- const allowedOrigins = [config.corsOrigin, 'http://localhost:5176']
+ const allowedOrigins = [
+   config.corsOrigin,
+   'http://localhost:5176',
+   'http://127.0.0.1:5176',
+   'http://localhost:9429',
+   'http://127.0.0.1:9429',
+ ]
 
  app.use(helmet())
  app.use(cors({ origin: allowedOrigins, credentials: false }))
@@ -27,6 +37,10 @@ app.use('/policies', policiesRouter)
 app.use('/audits', auditsRouter)
 app.use('/assessments', assessmentsRouter)
 app.use('/vendors', vendorsRouter)
+app.use('/audit', auditRouter)
+app.use('/soc2', soc2Router)
+app.use('/risk', riskRouter)
+app.use('/alerts', alertsRouter)
 
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', service: 'week4-api' })
