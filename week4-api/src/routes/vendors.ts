@@ -3,9 +3,11 @@ import multer from 'multer'
 import { Readable } from 'stream'
 import csvParser from 'csv-parser'
 import { Parser as Json2CsvParser } from 'json2csv'
-import { authMiddleware, AuthedRequest } from '../middleware/auth'
+import { authMiddleware, requireAdmin, AuthedRequest } from '../middleware/auth'
 import { vendorCreateSchema, vendorUpdateSchema, Vendor, RiskLevel, ComplianceStatus } from '../models/Vendor'
 import * as store from '../store/vendorsStore'
+import { logAction, getClientIp } from '../utils/audit'
+import { User } from '../models/User'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,6 +66,26 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   const parsed = vendorCreateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const id = await store.create(userId, parsed.data as any)
+  
+  // Log audit action
+  try {
+    const user = await User.findOne({ email: userId }).lean()
+    if (user) {
+      await logAction({
+        userId: user._id.toString(),
+        userEmail: user.email,
+        action: 'CREATE_VENDOR',
+        resourceType: 'Vendor',
+        resourceId: id,
+        changes: { after: parsed.data },
+        ipAddress: getClientIp(req),
+        status: 'success',
+      })
+    }
+  } catch (err) {
+    console.error('Failed to log audit action:', err)
+  }
+  
   res.status(201).json({ id })
 })
 
@@ -71,15 +93,67 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const parsed = vendorUpdateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  
+  // Get before state for audit log
+  const before = await store.listByUser(userId).then(vendors => 
+    vendors.find(v => v.id === req.params.id)
+  )
+  
   const ok = await store.update(userId, req.params.id, parsed.data as any)
   if (!ok) return res.status(404).json({ error: 'Not found' })
+  
+  // Log audit action
+  try {
+    const user = await User.findOne({ email: userId }).lean()
+    if (user) {
+      await logAction({
+        userId: user._id.toString(),
+        userEmail: user.email,
+        action: 'UPDATE_VENDOR',
+        resourceType: 'Vendor',
+        resourceId: req.params.id,
+        changes: { before, after: parsed.data },
+        ipAddress: getClientIp(req),
+        status: 'success',
+      })
+    }
+  } catch (err) {
+    console.error('Failed to log audit action:', err)
+  }
+  
   res.json({ id: req.params.id })
 })
 
-router.delete('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.delete('/:id', authMiddleware, requireAdmin, async (req: AuthedRequest, res) => {
   const userId = req.userId!
+  
+  // Get before state for audit log
+  const before = await store.listByUser(userId).then(vendors => 
+    vendors.find(v => v.id === req.params.id)
+  )
+  
   const ok = await store.remove(userId, req.params.id)
   if (!ok) return res.status(404).json({ error: 'Not found' })
+  
+  // Log audit action
+  try {
+    const user = await User.findOne({ email: userId }).lean()
+    if (user) {
+      await logAction({
+        userId: user._id.toString(),
+        userEmail: user.email,
+        action: 'DELETE_VENDOR',
+        resourceType: 'Vendor',
+        resourceId: req.params.id,
+        changes: { before },
+        ipAddress: getClientIp(req),
+        status: 'success',
+      })
+    }
+  } catch (err) {
+    console.error('Failed to log audit action:', err)
+  }
+  
   res.json({ ok: true })
 })
 
@@ -116,6 +190,26 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: Authed
     })
 
     const result = await store.upsertMany(userId, rows, 'name')
+    
+    // Log audit action for bulk upload
+    try {
+      const user = await User.findOne({ email: userId }).lean()
+      if (user) {
+        await logAction({
+          userId: user._id.toString(),
+          userEmail: user.email,
+          action: 'BULK_UPLOAD_VENDORS',
+          resourceType: 'Vendor',
+          resourceId: 'bulk',
+          changes: { after: { created: result.created, updated: result.updated, failed: result.failed } },
+          ipAddress: getClientIp(req),
+          status: 'success',
+        })
+      }
+    } catch (err) {
+      console.error('Failed to log audit action:', err)
+    }
+    
     res.json(result)
   } catch (e: any) {
     res.status(400).json({ error: e?.message || 'Failed to import CSV' })

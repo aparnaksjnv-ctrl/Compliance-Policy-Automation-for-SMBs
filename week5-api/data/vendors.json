@@ -1,0 +1,60 @@
+[
+  {
+    "id": "6d2b0kcgaylmgvp124n",
+    "userId": "68f3038aa2f36434d4cf717b",
+    "createdAt": "2025-10-18T03:03:38.759Z",
+    "updatedAt": "2025-10-18T03:03:38.759Z",
+    "name": "Acme Payments",
+    "serviceType": "Payments",
+    "standards": [
+      "GDPR",
+      "CCPA"
+    ],
+    "riskLevel": "Medium",
+    "status": "Pending",
+    "lastAuditDate": "2025-01-10",
+    "notes": "Onboarding"
+  },
+  {
+    "id": "n6l38kp8tlmhs1qeo2",
+    "userId": "6910dd2abeb64f8dea79bd90",
+    "createdAt": "2025-11-09T18:27:54.434Z",
+    "updatedAt": "2025-11-09T18:27:54.434Z",
+    "name": "AWS",
+    "serviceType": "Cloud",
+    "standards": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "riskLevel": "Medium",
+    "status": "Compliant",
+    "lastAuditDate": "2025-11-09",
+    "notes": "PCA completed"
+  },
+  {
+    "id": "3s1r8md96itmhs1qeo2",
+    "userId": "6910dd2abeb64f8dea79bd90",
+    "createdAt": "2025-11-09T18:27:54.434Z",
+    "updatedAt": "2025-11-09T18:27:54.434Z",
+    "name": "Stripe",
+    "serviceType": "Payments",
+    "standards": [
+      "PCI DSS"
+    ],
+    "riskLevel": "Low",
+    "status": "Compliant"
+  },
+  {
+    "id": "1800uy909zumhs1qeo2",
+    "userId": "6910dd2abeb64f8dea79bd90",
+    "createdAt": "2025-11-09T18:27:54.434Z",
+    "updatedAt": "2025-11-09T18:27:54.434Z",
+    "name": "Acme Analytics",
+    "serviceType": "Analytics",
+    "standards": [
+      "GDPR"
+    ],
+    "riskLevel": "High",
+    "status": "Pending"
+  }
+]

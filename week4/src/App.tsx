@@ -12,6 +12,8 @@ import { AuditDetail } from './pages/AuditDetail'
 import { Assessments } from './pages/Assessments'
 import { AssessmentDetail } from './pages/AssessmentDetail'
 import { Vendors } from './pages/Vendors'
+import { Soc2 } from './pages/Soc2'
+import { Alerts } from './pages/Alerts'
 
 function Protected({ authed, children }: { authed: boolean; children: JSX.Element }) {
   if (!authed) return <Navigate to="/login" replace />
@@ -41,6 +43,8 @@ export default function App() {
         {token && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={() => navigate('/')}>Home</button>
+            <button className="btn" onClick={() => navigate('/soc2')}>SOC 2</button>
+            <button className="btn" onClick={() => navigate('/alerts')}>Alerts</button>
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/policies/new') }} style={{ textDecoration: 'none' }}>
               <button className="btn btn--primary">New Policy</button>
             </a>
@@ -66,6 +70,8 @@ export default function App() {
         <Route path="/assessments" element={<Protected authed={!!token}><Assessments token={token} /></Protected>} />
         <Route path="/assessments/:id" element={<Protected authed={!!token}><AssessmentDetail token={token} /></Protected>} />
         <Route path="/vendors" element={<Protected authed={!!token}><Vendors token={token} /></Protected>} />
+        <Route path="/soc2" element={<Protected authed={!!token}><Soc2 /></Protected>} />
+        <Route path="/alerts" element={<Protected authed={!!token}><Alerts /></Protected>} />
         <Route path="/settings" element={<Protected authed={!!token}><Settings /></Protected>} />
         <Route path="*" element={<Navigate to={token ? '/' : '/login'} replace />} />
       </Routes>
