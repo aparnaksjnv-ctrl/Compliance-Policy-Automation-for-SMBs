@@ -2,6 +2,10 @@ import nodemailer from 'nodemailer'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
 
+export function isEmailConfigured(): boolean {
+  return Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS)
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
@@ -13,6 +17,10 @@ const transporter = nodemailer.createTransport({
 })
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  if (!isEmailConfigured()) {
+    throw new Error('Email delivery is not configured. Add EMAIL_USER and EMAIL_PASS to the API .env file.')
+  }
+
   try {
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || 'Compliance Platform <noreply@compliance.com>',

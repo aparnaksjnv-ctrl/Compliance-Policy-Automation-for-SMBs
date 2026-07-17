@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, AlertSettings } from '../api'
 
-export function Alerts() {
+export function Alerts({ token }: { token: string }) {
   const [settings, setSettings] = useState<AlertSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -14,13 +14,6 @@ export function Alerts() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setError('Not authenticated')
-          setLoading(false)
-          return
-        }
-
         const data = await api.listAlertSettings(token)
         setSettings(data)
 
@@ -36,15 +29,12 @@ export function Alerts() {
       }
     }
     loadSettings()
-  }, [])
+  }, [token])
 
   const updateSetting = async (key: keyof AlertSettings, value: any) => {
     if (!settings) return
 
     try {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
       const updated = { ...settings, [key]: value }
       setSettings(updated)
 
@@ -67,9 +57,7 @@ export function Alerts() {
     try {
       setSending(true)
       setMessage(null)
-      const token = localStorage.getItem('token')
-      if (!token) return
-
+      setError(null)
       const result = await api.sendTestAlert(token)
 
       const newAlert = { type: 'Test', message: result.message, sentAt: new Date().toISOString() }
@@ -94,7 +82,7 @@ export function Alerts() {
     )
   }
 
-  if (error) {
+  if (error && !settings) {
     return (
       <div>
         <div style={{ fontWeight: 700, marginBottom: 12 }}>Alerts</div>
@@ -110,6 +98,12 @@ export function Alerts() {
       {message && (
         <div className="card" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981', marginBottom: 12 }}>
           {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="card" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', marginBottom: 12 }}>
+          {error}
         </div>
       )}
 

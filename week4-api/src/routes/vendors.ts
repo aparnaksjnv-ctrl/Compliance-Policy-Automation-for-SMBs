@@ -8,6 +8,7 @@ import { vendorCreateSchema, vendorUpdateSchema, Vendor, RiskLevel, ComplianceSt
 import * as store from '../store/vendorsStore'
 import { logAction, getClientIp } from '../utils/audit'
 import { User } from '../models/User'
+import { generateVendorPdf } from '../utils/pdf'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -213,6 +214,22 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: Authed
     res.json(result)
   } catch (e: any) {
     res.status(400).json({ error: e?.message || 'Failed to import CSV' })
+  }
+})
+
+router.get('/export/pdf', authMiddleware, async (req: AuthedRequest, res) => {
+  try {
+    const userId = req.userId!
+    const [items, user] = await Promise.all([store.listByUser(userId), User.findById(userId).lean()])
+    const companyName = process.env.COMPLIANCE_COMPANY_NAME || user?.email || 'Compliance Command Center'
+    const pdf = await generateVendorPdf(companyName, items)
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', 'attachment; filename="vendors.pdf"')
+    res.setHeader('Content-Length', String(pdf.length))
+    res.send(pdf)
+  } catch (error) {
+    console.error('Failed to generate vendor PDF:', error)
+    res.status(500).json({ error: 'Failed to generate vendor PDF' })
   }
 })
 

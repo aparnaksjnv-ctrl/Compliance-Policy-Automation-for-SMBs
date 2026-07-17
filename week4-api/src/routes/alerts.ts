@@ -2,13 +2,17 @@ import { Router, Response } from 'express'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
-import { sendEmail, sendComplianceAlert } from '../utils/email'
+import { isEmailConfigured, sendEmail } from '../utils/email'
 
 const router = Router()
 
 // POST /api/alerts/test — send a test email to the authenticated user
 router.post('/test', authMiddleware, async (req: AuthedRequest, res: Response) => {
   try {
+    if (!isEmailConfigured()) {
+      return res.status(503).json({ error: 'Email delivery is not configured. Add EMAIL_USER and EMAIL_PASS to the API .env file.' })
+    }
+
     const userId = req.userId!
     const user = await User.findById(userId).lean()
     

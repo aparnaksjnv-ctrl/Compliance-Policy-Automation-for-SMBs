@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, Soc2Control, Soc2Summary } from '../api'
 
-export function Soc2() {
+export function Soc2({ token }: { token: string }) {
   const [controls, setControls] = useState<Soc2Control[]>([])
   const [summary, setSummary] = useState<Soc2Summary | null>(null)
   const [selectedControl, setSelectedControl] = useState<Soc2Control | null>(null)
@@ -12,13 +12,6 @@ export function Soc2() {
   useEffect(() => {
     async function loadData() {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setError('Not authenticated')
-          setLoading(false)
-          return
-        }
-
         // Check if user is admin
         try {
           const userData = await api.me(token)
@@ -37,13 +30,10 @@ export function Soc2() {
       }
     }
     loadData()
-  }, [])
+  }, [token])
 
   const handleStatusChange = async (controlId: string, newStatus: 'implemented' | 'partial' | 'not_implemented') => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
       await api.updateSoc2Control(token, controlId, { status: newStatus })
       
       // Refresh data
@@ -62,9 +52,6 @@ export function Soc2() {
 
   const handleNotesChange = async (controlId: string, notes: string) => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
       await api.updateSoc2Control(token, controlId, { notes })
       
       if (selectedControl?.controlId === controlId) {

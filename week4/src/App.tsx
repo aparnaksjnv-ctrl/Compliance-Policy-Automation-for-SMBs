@@ -39,7 +39,7 @@ export default function App() {
   return (
     <div className="container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
+        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance Command Center</h1>
         {token && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn" onClick={() => navigate('/')}>Dashboard</button>
@@ -75,8 +75,8 @@ export default function App() {
         <Route path="/assessments" element={<Protected authed={!!token}><Assessments token={token} /></Protected>} />
         <Route path="/assessments/:id" element={<Protected authed={!!token}><AssessmentDetail token={token} /></Protected>} />
         <Route path="/vendors" element={<Protected authed={!!token}><Vendors token={token} /></Protected>} />
-        <Route path="/soc2" element={<Protected authed={!!token}><Soc2 /></Protected>} />
-        <Route path="/alerts" element={<Protected authed={!!token}><Alerts /></Protected>} />
+        <Route path="/soc2" element={<Protected authed={!!token}><Soc2 token={token} /></Protected>} />
+        <Route path="/alerts" element={<Protected authed={!!token}><Alerts token={token} /></Protected>} />
         <Route path="/settings" element={<Protected authed={!!token}><Settings /></Protected>} />
         <Route path="*" element={<Navigate to={token ? '/' : '/login'} replace />} />
       </Routes>

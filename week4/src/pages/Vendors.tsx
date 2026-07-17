@@ -82,6 +82,10 @@ export function Vendors({ token }: { token: string }) {
     try { const blob = await api.exportVendorsTemplate(token); DownloadBlob(blob, 'vendors-template.csv') } catch (e: any) { alert(String(e?.message || 'Template download failed')) }
   }
 
+  async function onExportPdf() {
+    try { const blob = await api.exportVendorsPdf(token); DownloadBlob(blob, 'vendors.pdf') } catch (e: any) { alert(String(e?.message || 'PDF export failed')) }
+  }
+
   function openCreate() { setEditing(null); setForm({ name: '', standards: [] }) }
   function openEdit(v: Vendor) { setEditing(v); setForm({ ...v }) }
 
@@ -107,6 +111,7 @@ export function Vendors({ token }: { token: string }) {
           <button className="btn" onClick={() => fileRef.current?.click()}>Upload CSV</button>
           <button className="btn" onClick={() => void onDownloadTemplate()}>Download Template</button>
           <button className="btn" onClick={() => void onExportCSV()}>Download CSV</button>
+          <button className="btn btn--primary" onClick={() => void onExportPdf()}>Export PDF</button>
         </div>
       </div>
 

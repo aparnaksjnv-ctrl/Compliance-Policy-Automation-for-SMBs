@@ -31,6 +31,19 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   }
 }
 
+async function download(path: string, token: string): Promise<Blob> {
+  const res = await fetch(BASE + path, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    let message = `Download failed (${res.status})`
+    try {
+      const data = await res.json()
+      message = data?.error || message
+    } catch {}
+    throw new Error(message)
+  }
+  return res.blob()
+}
+
 export type PolicyStatus = 'Draft' | 'In Review' | 'Approved'
 export type Framework = 'GDPR' | 'HIPAA' | 'CCPA' | 'Other'
 export type Policy = {
@@ -129,6 +142,9 @@ export const api = {
   async getPolicy(token: string, id: string) {
     return request<Policy>(`/policies/${id}`, { headers: { Authorization: `Bearer ${token}` } })
   },
+  async downloadPolicyPdf(token: string, id: string) {
+    return download(`/policies/${id}/download`, token)
+  },
   async createPolicy(token: string, payload: Omit<Policy, 'id' | '_id' | 'versions'>) {
     return request<{ id: string }>(`/policies`, {
       method: 'POST',
@@ -219,6 +235,9 @@ export const api = {
     return request<{ overallScore: number; categoryCount: number }>(`/risk/overall`, {
       headers: { Authorization: `Bearer ${token}` },
     })
+  },
+  async downloadComplianceReport(token: string) {
+    return download('/reports/compliance', token)
   },
   async updateRiskScore(token: string, category: string, payload: { score?: number; trend?: RiskTrend; details?: string }) {
     return request<RiskScore>(`/risk/${category}`, {
@@ -382,6 +401,9 @@ export const api = {
     const res = await fetch(BASE + `/vendors/export`, { headers: { Authorization: `Bearer ${token}` } })
     if (!res.ok) throw new Error('Export failed')
     return res.blob()
+  },
+  async exportVendorsPdf(token: string): Promise<Blob> {
+    return download('/vendors/export/pdf', token)
   },
   async exportVendorsTemplate(token: string): Promise<Blob> {
     const res = await fetch(BASE + `/vendors/template`, { headers: { Authorization: `Bearer ${token}` } })

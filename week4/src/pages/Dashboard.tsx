@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { downloadBlob } from '../utils/download'
 
 export function Dashboard({ token }: { token: string }) {
   const navigate = useNavigate()
@@ -31,6 +32,7 @@ export function Dashboard({ token }: { token: string }) {
   const approved = useMemo(() => items.filter(p => p.status === 'Approved').length, [items])
   const coverage = total ? Math.round((approved / total) * 100) : 0
   const [search, setSearch] = useState('')
+  const [reportDownloading, setReportDownloading] = useState(false)
   const audits = auditsQ.data?.items ?? []
   const openFindings = useMemo(() => audits.reduce((acc, a) => acc + ((a.findings || []).filter(f => f.status === 'Open').length), 0), [audits])
   const upcoming = useMemo(() => {
@@ -70,6 +72,18 @@ export function Dashboard({ token }: { token: string }) {
       case 'improving': return '↑'
       case 'declining': return '↓'
       default: return '→'
+    }
+  }
+
+  async function downloadReport() {
+    try {
+      setReportDownloading(true)
+      const blob = await api.downloadComplianceReport(token)
+      downloadBlob(blob, 'compliance-report.pdf')
+    } catch (e: any) {
+      alert(String(e?.message || 'Report download failed'))
+    } finally {
+      setReportDownloading(false)
     }
   }
 
@@ -117,6 +131,9 @@ export function Dashboard({ token }: { token: string }) {
               onKeyDown={e => { if (e.key === 'Enter') navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' }) }}
             />
             <button onClick={() => navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' })}>Search</button>
+            <button onClick={() => void downloadReport()} disabled={reportDownloading}>
+              {reportDownloading ? 'Preparing Report…' : 'Download Compliance Report'}
+            </button>
             <button onClick={() => navigate('/policies/new')} style={{ background: '#059669', borderColor: '#065f46' }}>New Policy</button>
           </div>
         </div>
