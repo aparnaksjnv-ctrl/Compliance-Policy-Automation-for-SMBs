@@ -6,6 +6,7 @@ import { Soc2ControlModel } from '../models/Soc2Control'
 import { AuditLogModel } from '../models/AuditLog'
 import * as vendorStore from '../store/vendorsStore'
 import { generateComplianceReportPdf } from '../utils/pdf'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
@@ -16,7 +17,7 @@ function companyNameFor(email?: string): string {
   return domain.charAt(0).toUpperCase() + domain.slice(1)
 }
 
-router.get('/compliance', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/compliance', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   try {
     const userId = req.userId!
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -57,6 +58,6 @@ router.get('/compliance', authMiddleware, async (req: AuthedRequest, res) => {
     console.error('Failed to generate compliance report PDF:', error)
     res.status(500).json({ error: 'Failed to generate compliance report PDF' })
   }
-})
+}))
 
 export default router

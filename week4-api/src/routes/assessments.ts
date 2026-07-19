@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { Assessment, AssessmentStatus } from '../models/Assessment'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
@@ -13,7 +14,7 @@ const baseSchema = z.object({
   dueDate: z.string().optional(),
 })
 
-router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const q = String(req.query.q || '').toLowerCase()
   const status = String(req.query.status || '') as AssessmentStatus | ''
@@ -29,9 +30,9 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   const items = await Assessment.find(filter).sort({ updatedAt: -1 }).lean()
   res.json({ items })
-})
+}))
 
-router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = baseSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const { name, owner, framework, status, dueDate } = parsed.data
@@ -42,15 +43,15 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   const created = await Assessment.create(base)
   res.status(201).json({ id: created.id })
-})
+}))
 
-router.get('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Assessment.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
   res.json(doc)
-})
+}))
 
-router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = baseSchema.partial().safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const patch: any = { ...parsed.data }
@@ -70,7 +71,7 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: updated.id })
-})
+}))
 
 const itemCreateSchema = z.object({
   text: z.string().min(5),
@@ -78,7 +79,7 @@ const itemCreateSchema = z.object({
   severity: z.enum(['Low','Medium','High']).default('Medium'),
 })
 
-router.post('/:id/items', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/items', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = itemCreateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const pushDoc = {
@@ -96,7 +97,7 @@ router.post('/:id/items', authMiddleware, async (req: AuthedRequest, res) => {
   if (!updated) return res.status(404).json({ error: 'Not found' })
   const newId = updated.items[updated.items.length - 1]._id
   res.status(201).json({ id: String(newId) })
-})
+}))
 
 const itemPatchSchema = z.object({
   text: z.string().min(5).optional(),
@@ -107,7 +108,7 @@ const itemPatchSchema = z.object({
   evidenceUrls: z.array(z.string().url()).optional(),
 })
 
-router.put('/:id/items/:iid', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id/items/:iid', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = itemPatchSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const setOps: any = {}
@@ -119,6 +120,6 @@ router.put('/:id/items/:iid', authMiddleware, async (req: AuthedRequest, res) =>
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: req.params.iid })
-})
+}))
 
 export default router

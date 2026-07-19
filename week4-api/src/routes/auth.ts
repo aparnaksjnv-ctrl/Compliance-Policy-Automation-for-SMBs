@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { User } from '../models/User'
 import { signJwt } from '../utils/jwt'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
@@ -12,7 +13,7 @@ const registerSchema = z.object({
   password: z.string().min(8),
 })
 
-router.post('/register', async (req, res) => {
+router.post('/register', asyncHandler(async (req, res) => {
   const parsed = registerSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const { email, password } = parsed.data
@@ -26,14 +27,14 @@ router.post('/register', async (req, res) => {
   const user = await User.create({ email, passwordHash, role })
   const token = signJwt(user.id)
   return res.status(201).json({ token })
-})
+}))
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', asyncHandler(async (req, res) => {
   const parsed = loginSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const { email, password } = parsed.data
@@ -46,13 +47,13 @@ router.post('/login', async (req, res) => {
 
   const token = signJwt(user.id)
   return res.json({ token })
-})
+}))
 
 export default router
 
 // Return current user profile
-router.get('/me', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/me', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const user = await User.findById(req.userId).lean()
   if (!user) return res.status(404).json({ error: 'Not found' })
   return res.json({ id: String(user._id), email: user.email, role: user.role })
-})
+}))

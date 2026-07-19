@@ -2,11 +2,12 @@ import { Router, Response } from 'express'
 import { authMiddleware, requireAdmin, AuthedRequest } from '../middleware/auth'
 import { AuditLogModel } from '../models/AuditLog'
 import { User } from '../models/User'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
 // GET /api/audit - all logs, paginated 20 per page, admin only
-router.get('/', authMiddleware, requireAdmin, async (req: AuthedRequest, res: Response) => {
+router.get('/', authMiddleware, requireAdmin, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const page = parseInt((req.query as any).page as string) || 1
     const limit = parseInt((req.query as any).limit as string) || 20
@@ -34,10 +35,10 @@ router.get('/', authMiddleware, requireAdmin, async (req: AuthedRequest, res: Re
     console.error('Error fetching audit logs:', error)
     res.status(500).json({ error: 'Failed to fetch audit logs' })
   }
-})
+}))
 
 // GET /api/audit/:id - single entry
-router.get('/:id', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const log = await AuditLogModel.findById((req.params as any).id).lean()
     if (!log) {
@@ -48,10 +49,10 @@ router.get('/:id', authMiddleware, async (req: AuthedRequest, res: Response) => 
     console.error('Error fetching audit log:', error)
     res.status(500).json({ error: 'Failed to fetch audit log' })
   }
-})
+}))
 
 // GET /api/audit/user/:userId - logs by user (users can only see their own, admins can see any)
-router.get('/user/:userId', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.get('/user/:userId', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const requestedUserId = (req.params as any).userId
     const currentUserEmail = req.userId!
@@ -93,6 +94,6 @@ router.get('/user/:userId', authMiddleware, async (req: AuthedRequest, res: Resp
     console.error('Error fetching user audit logs:', error)
     res.status(500).json({ error: 'Failed to fetch user audit logs' })
   }
-})
+}))
 
 export default router

@@ -4,6 +4,7 @@ import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
 import { generatePolicyPdf, policyPdfFilename } from '../utils/pdf'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
@@ -17,7 +18,7 @@ const policySchema = z.object({
   variables: z.record(z.any()).optional(),
 })
 
-router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const q = String(req.query.q || '').toLowerCase()
   const status = String(req.query.status || '') as PolicyStatus | ''
@@ -31,11 +32,11 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
   ]
   const list = await Policy.find(filter).sort({ updatedAt: -1 }).lean()
   res.json({ items: list })
-})
+}))
 
 // Generate content for a policy using a selected template and optional company data.
 // This is a lightweight local generator. You can wire OpenAI/HF by replacing the generator below.
-router.post('/generate', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/generate', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const schema = z.object({
     template: z.enum(['GDPR', 'HIPAA', 'CCPA']),
     company: z.any().optional(),
@@ -104,9 +105,9 @@ Consumer Rights
 ${existingContent ? `\n---\nExisting Notes\n${existingContent}` : ''}`
 
   res.json({ content: merged })
-})
+}))
 
-router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = policySchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const base: any = { ...parsed.data, userId: req.userId }
@@ -115,9 +116,9 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   const created = await Policy.create(base)
   res.status(201).json({ id: created.id })
-})
+}))
 
-router.get('/:id/download', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/:id/download', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   try {
     const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
     if (!doc) return res.status(404).json({ error: 'Not found' })
@@ -139,15 +140,15 @@ router.get('/:id/download', authMiddleware, async (req: AuthedRequest, res) => {
     console.error('Failed to generate policy PDF:', error)
     res.status(500).json({ error: 'Failed to generate policy PDF' })
   }
-})
+}))
 
-router.get('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
   res.json(doc)
-})
+}))
 
-router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = policySchema.partial().safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const updateOps: any = { $set: parsed.data }
@@ -165,15 +166,15 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: updated.id })
-})
+}))
 
-router.delete('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.delete('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const deleted = await Policy.findOneAndDelete({ _id: req.params.id, userId: req.userId })
   if (!deleted) return res.status(404).json({ error: 'Not found' })
   res.status(204).send()
-})
+}))
 // Export policy content, optionally uploading to S3 when configured.
-router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/export', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
   const content = doc.content || ''
@@ -194,10 +195,10 @@ router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
     }
   }
   res.json({ ok: true, content })
-})
+}))
 
 // Status transitions
-router.post('/:id/submit-review', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/submit-review', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const updated = await Policy.findOneAndUpdate(
     { _id: req.params.id, userId: req.userId },
     { $set: { status: 'In Review' as PolicyStatus } },
@@ -205,9 +206,9 @@ router.post('/:id/submit-review', authMiddleware, async (req: AuthedRequest, res
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: updated.id, status: updated.status })
-})
+}))
 
-router.post('/:id/approve', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/approve', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const user = await User.findById(req.userId).lean()
   if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
   const updated = await Policy.findOneAndUpdate(
@@ -217,17 +218,17 @@ router.post('/:id/approve', authMiddleware, async (req: AuthedRequest, res) => {
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: updated.id, status: updated.status })
-})
+}))
 
 // Versions
-router.get('/:id/versions', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/:id/versions', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
   if (!doc) return res.status(404).json({ error: 'Not found' })
   res.json({ versions: doc.versions || [] })
-})
+}))
 
 // Template-based generation (no persistence) — used by UI "Generate (template)"
-router.post('/generate', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/generate', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const schema = z.object({
     template: z.enum(['GDPR','HIPAA','CCPA']),
     company: z.any().optional(),
@@ -298,10 +299,10 @@ Contracts restrict use of personal information to business purpose.
   const existing = parsed.data.existingContent?.trim()
   const out = existing ? `${existing}\n\n${content}` : content
   res.json({ content: out })
-})
+}))
 
 // AI-assisted draft generation (optional)
-router.post('/:id/generate', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return res.status(501).json({ error: 'AI generation not configured' })
 
@@ -363,15 +364,15 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Generation failed' })
   }
-})
+}))
 
 // Export current policy content (simple text export)
-router.post('/:id/export', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/export', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
   if (!policy) return res.status(404).json({ error: 'Not found' })
   const content = String(policy.content || '')
   // For simplicity return inline content; frontend will download as file
   res.json({ ok: true, content })
-})
+}))
 
 export default router

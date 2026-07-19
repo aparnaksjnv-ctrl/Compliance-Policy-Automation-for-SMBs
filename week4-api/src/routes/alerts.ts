@@ -3,11 +3,12 @@ import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
 import { isEmailConfigured, sendEmail } from '../utils/email'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
 // POST /api/alerts/test — send a test email to the authenticated user
-router.post('/test', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.post('/test', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     if (!isEmailConfigured()) {
       return res.status(503).json({ error: 'Email delivery is not configured. Add EMAIL_USER and EMAIL_PASS to the API .env file.' })
@@ -40,10 +41,10 @@ router.post('/test', authMiddleware, async (req: AuthedRequest, res: Response) =
     console.error('Error sending test email:', error)
     res.status(500).json({ error: 'Failed to send test email' })
   }
-})
+}))
 
 // GET /api/alerts/settings — get alert preferences
-router.get('/settings', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.get('/settings', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const userId = req.userId!
     const user = await User.findById(userId).lean()
@@ -70,10 +71,10 @@ router.get('/settings', authMiddleware, async (req: AuthedRequest, res: Response
     console.error('Error fetching alert settings:', error)
     res.status(500).json({ error: 'Failed to fetch alert settings' })
   }
-})
+}))
 
 // PUT /api/alerts/settings — update alert preferences
-router.put('/settings', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.put('/settings', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const userId = req.userId!
     const user = await User.findById(userId).lean()
@@ -100,6 +101,6 @@ router.put('/settings', authMiddleware, async (req: AuthedRequest, res: Response
     console.error('Error updating alert settings:', error)
     res.status(500).json({ error: 'Failed to update alert settings' })
   }
-})
+}))
 
 export default router

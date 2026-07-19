@@ -9,6 +9,7 @@ import * as store from '../store/vendorsStore'
 import { logAction, getClientIp } from '../utils/audit'
 import { User } from '../models/User'
 import { generateVendorPdf } from '../utils/pdf'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -45,7 +46,7 @@ function parseStandards(s?: string): string[] | undefined {
 
 const router = Router()
 
-router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const q = String(req.query.q || '').toLowerCase()
   const risk = String(req.query.risk || '')
@@ -60,9 +61,9 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
     return true
   })
   res.json({ items })
-})
+}))
 
-router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const parsed = vendorCreateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
@@ -88,9 +89,9 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   
   res.status(201).json({ id })
-})
+}))
 
-router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const parsed = vendorUpdateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
@@ -123,9 +124,9 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   }
   
   res.json({ id: req.params.id })
-})
+}))
 
-router.delete('/:id', authMiddleware, requireAdmin, async (req: AuthedRequest, res) => {
+router.delete('/:id', authMiddleware, requireAdmin, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   
   // Get before state for audit log
@@ -156,9 +157,9 @@ router.delete('/:id', authMiddleware, requireAdmin, async (req: AuthedRequest, r
   }
   
   res.json({ ok: true })
-})
+}))
 
-router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthedRequest, res) => {
+router.post('/upload', authMiddleware, upload.single('file'), asyncHandler(async (req: AuthedRequest, res) => {
   try {
     const userId = req.userId!
     const file = (req as any).file as any | undefined
@@ -215,9 +216,9 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: Authed
   } catch (e: any) {
     res.status(400).json({ error: e?.message || 'Failed to import CSV' })
   }
-})
+}))
 
-router.get('/export/pdf', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/export/pdf', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   try {
     const userId = req.userId!
     const [items, user] = await Promise.all([store.listByUser(userId), User.findById(userId).lean()])
@@ -231,9 +232,9 @@ router.get('/export/pdf', authMiddleware, async (req: AuthedRequest, res) => {
     console.error('Failed to generate vendor PDF:', error)
     res.status(500).json({ error: 'Failed to generate vendor PDF' })
   }
-})
+}))
 
-router.get('/export', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/export', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const items = await store.listByUser(userId)
   const fields = [
@@ -250,9 +251,9 @@ router.get('/export', authMiddleware, async (req: AuthedRequest, res) => {
   res.setHeader('Content-Type', 'text/csv')
   res.setHeader('Content-Disposition', 'attachment; filename="vendors.csv"')
   res.send(csv)
-})
+}))
 
-router.get('/template', authMiddleware, async (_req: AuthedRequest, res) => {
+router.get('/template', authMiddleware, asyncHandler(async (_req: AuthedRequest, res) => {
   const fields = [
     { label: 'Vendor Name', value: 'name' },
     { label: 'Service Type', value: 'serviceType' },
@@ -267,6 +268,6 @@ router.get('/template', authMiddleware, async (_req: AuthedRequest, res) => {
   res.setHeader('Content-Type', 'text/csv')
   res.setHeader('Content-Disposition', 'attachment; filename="vendors-template.csv"')
   res.send(csv)
-})
+}))
 
 export default router

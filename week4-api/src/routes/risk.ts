@@ -2,11 +2,12 @@ import { Router, Response } from 'express'
 import { authMiddleware, requireAdmin, AuthedRequest } from '../middleware/auth'
 import { RiskScoreModel } from '../models/RiskScore'
 import { notifyAdmins } from '../utils/email'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
 // GET /api/risk — get all category scores
-router.get('/', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const scores = await RiskScoreModel.find().sort({ category: 1 }).lean()
     res.json({ scores })
@@ -14,10 +15,10 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res: Response) => {
     console.error('Error fetching risk scores:', error)
     res.status(500).json({ error: 'Failed to fetch risk scores' })
   }
-})
+}))
 
 // GET /api/risk/overall — calculate and return overall risk score (average of all categories)
-router.get('/overall', authMiddleware, async (req: AuthedRequest, res: Response) => {
+router.get('/overall', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const scores = await RiskScoreModel.find().lean()
     
@@ -33,10 +34,10 @@ router.get('/overall', authMiddleware, async (req: AuthedRequest, res: Response)
     console.error('Error calculating overall risk score:', error)
     res.status(500).json({ error: 'Failed to calculate overall risk score' })
   }
-})
+}))
 
 // PUT /api/risk/:category — update a category score (admin only)
-router.put('/:category', authMiddleware, requireAdmin, async (req: AuthedRequest, res: Response) => {
+router.put('/:category', authMiddleware, requireAdmin, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     const category = (req.params as any).category
     const { score, trend, details } = (req.body as any)
@@ -66,6 +67,6 @@ router.put('/:category', authMiddleware, requireAdmin, async (req: AuthedRequest
     console.error('Error updating risk score:', error)
     res.status(500).json({ error: 'Failed to update risk score' })
   }
-})
+}))
 
 export default router
