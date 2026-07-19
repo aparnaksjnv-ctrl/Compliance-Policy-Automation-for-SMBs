@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { getToken } from '../lib'
 
 export function Settings() {
   const [user, setUser] = useState<{ id: string; email: string; role: 'user' | 'admin' } | null>(null)
@@ -8,7 +9,7 @@ export function Settings() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const token = localStorage.getItem('token')
+        const token = getToken()
         if (token) {
           const userData = await api.me(token)
           setUser(userData)
