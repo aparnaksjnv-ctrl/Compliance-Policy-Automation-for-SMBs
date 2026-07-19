@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
+import { generatePolicyPdf, policyPdfFilename } from '../utils/pdf'
 
 const router = Router()
 
@@ -114,6 +115,30 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   const created = await Policy.create(base)
   res.status(201).json({ id: created.id })
+})
+
+router.get('/:id/download', authMiddleware, async (req: AuthedRequest, res) => {
+  try {
+    const doc = await Policy.findOne({ _id: req.params.id, userId: req.userId }).lean()
+    if (!doc) return res.status(404).json({ error: 'Not found' })
+    const user = await User.findById(req.userId).lean()
+    const companyName = doc.company || process.env.COMPLIANCE_COMPANY_NAME || user?.email || 'Compliance Command Center'
+    const pdf = await generatePolicyPdf({
+      companyName,
+      policyTitle: doc.name,
+      content: doc.content || '',
+      framework: doc.framework,
+      owner: doc.owner,
+      status: doc.status,
+    })
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${policyPdfFilename(doc.name)}"`)
+    res.setHeader('Content-Length', String(pdf.length))
+    res.send(pdf)
+  } catch (error) {
+    console.error('Failed to generate policy PDF:', error)
+    res.status(500).json({ error: 'Failed to generate policy PDF' })
+  }
 })
 
 router.get('/:id', authMiddleware, async (req: AuthedRequest, res) => {

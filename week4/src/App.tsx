@@ -12,6 +12,8 @@ import { AuditDetail } from './pages/AuditDetail'
 import { Assessments } from './pages/Assessments'
 import { AssessmentDetail } from './pages/AssessmentDetail'
 import { Vendors } from './pages/Vendors'
+import { Soc2 } from './pages/Soc2'
+import { Alerts } from './pages/Alerts'
 
 function Protected({ authed, children }: { authed: boolean; children: JSX.Element }) {
   if (!authed) return <Navigate to="/login" replace />
@@ -37,10 +39,17 @@ export default function App() {
   return (
     <div className="container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance & Policy Automation for SMBs</h1>
+        <h1 style={{ margin: 0, fontSize: 18 }}>Compliance Command Center</h1>
         {token && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={() => navigate('/')}>Home</button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn" onClick={() => navigate('/')}>Dashboard</button>
+            <button className="btn" onClick={() => navigate('/policies')}>Policies</button>
+            <button className="btn" onClick={() => navigate('/vendors')}>Vendors</button>
+            <button className="btn" onClick={() => navigate('/assessments')}>Assessments</button>
+            <button className="btn" onClick={() => navigate('/audits')}>Audits</button>
+            <button className="btn" onClick={() => navigate('/soc2')}>SOC 2</button>
+            <button className="btn" onClick={() => navigate('/alerts')}>Alerts</button>
+            <button className="btn" onClick={() => navigate('/settings')}>Settings</button>
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/policies/new') }} style={{ textDecoration: 'none' }}>
               <button className="btn btn--primary">New Policy</button>
             </a>
@@ -66,6 +75,8 @@ export default function App() {
         <Route path="/assessments" element={<Protected authed={!!token}><Assessments token={token} /></Protected>} />
         <Route path="/assessments/:id" element={<Protected authed={!!token}><AssessmentDetail token={token} /></Protected>} />
         <Route path="/vendors" element={<Protected authed={!!token}><Vendors token={token} /></Protected>} />
+        <Route path="/soc2" element={<Protected authed={!!token}><Soc2 token={token} /></Protected>} />
+        <Route path="/alerts" element={<Protected authed={!!token}><Alerts token={token} /></Protected>} />
         <Route path="/settings" element={<Protected authed={!!token}><Settings /></Protected>} />
         <Route path="*" element={<Navigate to={token ? '/' : '/login'} replace />} />
       </Routes>

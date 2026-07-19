@@ -31,6 +31,19 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   }
 }
 
+async function download(path: string, token: string): Promise<Blob> {
+  const res = await fetch(BASE + path, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    let message = `Download failed (${res.status})`
+    try {
+      const data = await res.json()
+      message = data?.error || message
+    } catch {}
+    throw new Error(message)
+  }
+  return res.blob()
+}
+
 export type PolicyStatus = 'Draft' | 'In Review' | 'Approved'
 export type Framework = 'GDPR' | 'HIPAA' | 'CCPA' | 'Other'
 export type Policy = {
@@ -69,6 +82,44 @@ export type Audit = {
   findings?: Finding[]
 }
 
+export type Soc2ControlStatus = 'implemented' | 'partial' | 'not_implemented'
+export type Soc2Control = {
+  controlId: string
+  category: string
+  title: string
+  description: string
+  status: Soc2ControlStatus
+  owner: string
+  evidence: string[]
+  lastReviewed: string
+  notes: string
+}
+
+export type Soc2Summary = {
+  total: number
+  implemented: number
+  partial: number
+  not_implemented: number
+}
+
+export type RiskTrend = 'improving' | 'stable' | 'declining'
+export type RiskScore = {
+  category: string
+  score: number
+  maxScore: number
+  trend: RiskTrend
+  lastUpdated: string
+  details: string
+}
+
+export type AlertSettings = {
+  userId: string
+  vendorRiskAlerts: boolean
+  soc2Alerts: boolean
+  policyExpiryAlerts: boolean
+  alertEmail: string
+}
+
 export const api = {
   async me(token: string) {
     return request<{ id: string; email: string; role: 'user' | 'admin' }>(`/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
@@ -90,6 +141,9 @@ export const api = {
   },
   async getPolicy(token: string, id: string) {
     return request<Policy>(`/policies/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+  },
+  async downloadPolicyPdf(token: string, id: string) {
+    return download(`/policies/${id}/download`, token)
   },
   async createPolicy(token: string, payload: Omit<Policy, 'id' | '_id' | 'versions'>) {
     return request<{ id: string }>(`/policies`, {
@@ -145,6 +199,69 @@ export const api = {
     return request<{ content: string }>(`/policies/${id}/generate`, {
       method: 'POST',
       body: JSON.stringify(payload || {}),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  // SOC 2 Controls
+  async listSoc2Controls(token: string) {
+    return request<{ controls: Soc2Control[]; summary: Soc2Summary }>(`/soc2`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async getSoc2Control(token: string, controlId: string) {
+    return request<Soc2Control>(`/soc2/${controlId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async updateSoc2Control(token: string, controlId: string, payload: { status?: 'implemented' | 'partial' | 'not_implemented'; notes?: string; evidence?: string[]; owner?: string }) {
+    return request<Soc2Control>(`/soc2/${controlId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async getSoc2Summary(token: string) {
+    return request<Soc2Summary>(`/soc2/summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  // Risk Scores
+  async listRiskScores(token: string) {
+    return request<{ scores: RiskScore[] }>(`/risk`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async getOverallRiskScore(token: string) {
+    return request<{ overallScore: number; categoryCount: number }>(`/risk/overall`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async downloadComplianceReport(token: string) {
+    return download('/reports/compliance', token)
+  },
+  async updateRiskScore(token: string, category: string, payload: { score?: number; trend?: RiskTrend; details?: string }) {
+    return request<RiskScore>(`/risk/${category}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  // Alerts
+  async listAlertSettings(token: string) {
+    return request<AlertSettings>(`/alerts/settings`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async updateAlertSettings(token: string, payload: { vendorRiskAlerts?: boolean; soc2Alerts?: boolean; policyExpiryAlerts?: boolean; alertEmail?: string }) {
+    return request<AlertSettings>(`/alerts/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  async sendTestAlert(token: string) {
+    return request<{ success: boolean; message: string }>(`/alerts/test`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
@@ -284,6 +401,9 @@ export const api = {
     const res = await fetch(BASE + `/vendors/export`, { headers: { Authorization: `Bearer ${token}` } })
     if (!res.ok) throw new Error('Export failed')
     return res.blob()
+  },
+  async exportVendorsPdf(token: string): Promise<Blob> {
+    return download('/vendors/export/pdf', token)
   },
   async exportVendorsTemplate(token: string): Promise<Blob> {
     const res = await fetch(BASE + `/vendors/template`, { headers: { Authorization: `Bearer ${token}` } })

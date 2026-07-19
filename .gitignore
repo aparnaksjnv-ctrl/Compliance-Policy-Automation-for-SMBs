@@ -57,6 +57,7 @@ TEST*.xml
 *.log
 .env
 .env.*
+!.env.example
 
 # Large media files (optional)
 *.mp4

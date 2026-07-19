@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import DOMPurify from 'dompurify'
 import { diffWords } from 'diff'
 import type { Change } from 'diff'
+import { downloadBlob } from '../utils/download'
 
 export function PolicyDetail({ token }: { token: string }) {
   const { id = '' } = useParams()
@@ -124,6 +125,16 @@ export function PolicyDetail({ token }: { token: string }) {
     onError: (e: any) => toast.error(String(e?.message || 'Export failed')),
   })
 
+  const pdf = useMutation({
+    mutationFn: () => api.downloadPolicyPdf(token, id),
+    onSuccess: blob => {
+      const filename = `${String(data?.name || 'policy').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'policy'}.pdf`
+      downloadBlob(blob, filename)
+      toast.success('PDF downloaded')
+    },
+    onError: (e: any) => toast.error(String(e?.message || 'PDF download failed')),
+  })
+
   const [genPrompt, setGenPrompt] = useState('')
   const [genPct, setGenPct] = useState(0)
   const gen = useMutation({
@@ -213,6 +224,9 @@ export function PolicyDetail({ token }: { token: string }) {
             <input type="file" accept="application/json" onChange={onCompanyFile} />
             <button type="button" onClick={() => genTemplates.mutate()} disabled={genTemplates.isPending}>Generate (template)</button>
             <button type="button" onClick={() => exp.mutate()} disabled={exp.isPending}>Export</button>
+            <button type="button" className="btn btn--primary" onClick={() => pdf.mutate()} disabled={pdf.isPending}>
+              {pdf.isPending ? 'Preparing PDF…' : 'Download PDF'}
+            </button>
           </div>
           <div ref={editorEl} style={{ background: '#111827', color: '#e5e7eb', border: '1px solid var(--border)', borderRadius: 8 }} />
         </div>
