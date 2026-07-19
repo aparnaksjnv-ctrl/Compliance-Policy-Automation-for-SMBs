@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { Audit, AuditStatus } from '../models/Audit'
+import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
@@ -12,7 +13,7 @@ const auditSchema = z.object({
   dueDate: z.string().optional(), // ISO or YYYY-MM-DD
 })
 
-router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const userId = req.userId!
   const q = String(req.query.q || '').toLowerCase()
   const status = String(req.query.status || '') as AuditStatus | ''
@@ -31,9 +32,9 @@ router.get('/', authMiddleware, async (req: AuthedRequest, res) => {
 
   const list = await Audit.find(filter).sort({ updatedAt: -1 }).lean()
   res.json({ items: list })
-})
+}))
 
-router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = auditSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const { name, owner, status, dueDate } = parsed.data
@@ -44,15 +45,15 @@ router.post('/', authMiddleware, async (req: AuthedRequest, res) => {
   }
   const created = await Audit.create(base)
   res.status(201).json({ id: created.id })
-})
+}))
 
-router.get('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Audit.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
   res.json(doc)
-})
+}))
 
-router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = auditSchema.partial().safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const update: any = { ...parsed.data }
@@ -72,7 +73,7 @@ router.put('/:id', authMiddleware, async (req: AuthedRequest, res) => {
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: updated.id })
-})
+}))
 
 const findingSchema = z.object({
   title: z.string().min(2),
@@ -81,7 +82,7 @@ const findingSchema = z.object({
   status: z.enum(['Open','Resolved']).optional(),
 })
 
-router.post('/:id/findings', authMiddleware, async (req: AuthedRequest, res) => {
+router.post('/:id/findings', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = findingSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const pushDoc = {
@@ -99,7 +100,7 @@ router.post('/:id/findings', authMiddleware, async (req: AuthedRequest, res) => 
   if (!updated) return res.status(404).json({ error: 'Not found' })
   const newId = updated.findings[updated.findings.length - 1]._id
   res.status(201).json({ id: String(newId) })
-})
+}))
 
 const findingPatchSchema = z.object({
   title: z.string().min(2).optional(),
@@ -108,7 +109,7 @@ const findingPatchSchema = z.object({
   status: z.enum(['Open','Resolved']).optional(),
 })
 
-router.put('/:id/findings/:fid', authMiddleware, async (req: AuthedRequest, res) => {
+router.put('/:id/findings/:fid', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = findingPatchSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const setOps: any = {}
@@ -122,6 +123,6 @@ router.put('/:id/findings/:fid', authMiddleware, async (req: AuthedRequest, res)
   )
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json({ id: req.params.fid })
-})
+}))
 
 export default router

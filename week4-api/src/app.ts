@@ -14,6 +14,7 @@ import soc2Router from './routes/soc2'
 import riskRouter from './routes/risk'
 import alertsRouter from './routes/alerts'
 import reportsRouter from './routes/reports'
+import { errorHandler } from './middleware/errorHandler'
 
 export const app = express()
 
@@ -55,5 +56,8 @@ app.use('/api/reports', reportsRouter)
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', service: 'week4-api' })
 })
+
+// Must stay last: turns route errors into responses instead of crashing.
+app.use(errorHandler)
 
 export default app
