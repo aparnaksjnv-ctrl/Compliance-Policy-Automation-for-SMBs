@@ -45,8 +45,8 @@ export function AssessmentDetail({ token }: { token: string }) {
   }
 
   const a = assessQ.data
-  if (assessQ.isFetching && !a) return <div style={{ color: '#94a3b8' }}>Loading…</div>
-  if (assessQ.error) return <div style={{ color: '#fca5a5' }}>{String((assessQ.error as any)?.message || 'Failed to load')}</div>
+  if (assessQ.isFetching && !a) return <div className="text-muted">Loading…</div>
+  if (assessQ.error) return <div className="text-danger">{String((assessQ.error as any)?.message || 'Failed to load')}</div>
   if (!a) return null
 
   const total = (a.items || []).length
@@ -57,21 +57,21 @@ export function AssessmentDetail({ token }: { token: string }) {
   const canComplete = total > 0 && (a.items || []).every(i => i.response !== 'N/A')
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>{a.name}</div>
-          <div style={{ color: '#94a3b8' }}>Owner: {a.owner} {a.framework ? `• ${a.framework}` : ''} {a.dueDate ? `• Due ${new Date(a.dueDate).toLocaleDateString()}` : ''}</div>
+          <div className="page-header__title">{a.name}</div>
+          <div style={{ color: 'var(--accent-soft)' }}>Owner: {a.owner} {a.framework ? `• ${a.framework}` : ''} {a.dueDate ? `• Due ${new Date(a.dueDate).toLocaleDateString()}` : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 8 }}>{a.status}</span>
-          {a.status !== 'Draft' && <button onClick={() => setStatus('Draft')}>Mark Draft</button>}
-          {a.status !== 'In Progress' && <button onClick={() => setStatus('In Progress')}>Start</button>}
-          {a.status !== 'Completed' && canComplete && <button onClick={() => setStatus('Completed')}>Complete</button>}
+        <div className="page-header__actions">
+          <span className="chip">{a.status}</span>
+          {a.status !== 'Draft' && <button className="btn" onClick={() => setStatus('Draft')}>Mark Draft</button>}
+          {a.status !== 'In Progress' && <button className="btn" onClick={() => setStatus('In Progress')}>Start</button>}
+          {a.status !== 'Completed' && canComplete && <button className="btn" onClick={() => setStatus('Completed')}>Complete</button>}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, color: '#94a3b8' }}>
+      <div className="text-muted" style={{ display: 'flex', gap: 12 }}>
         <div>Questions: {total}</div>
         <div>Yes: {yes}</div>
         <div>No: {no}</div>
@@ -79,7 +79,7 @@ export function AssessmentDetail({ token }: { token: string }) {
       </div>
 
       {/* Items */}
-      <section style={{ border: '1px solid var(--border)', borderRadius: 10, background: '#111827', padding: 12 }}>
+      <section className="card">
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Checklist Items</div>
         <div style={{ display: 'grid', gap: 8 }}>
           {(a.items || []).map(it => (
@@ -88,7 +88,7 @@ export function AssessmentDetail({ token }: { token: string }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: 600 }}>{it.text}</div>
-                    <div style={{ color: '#94a3b8' }}>{it.category || ''}</div>
+                    <div className="text-muted">{it.category || ''}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <select value={it.response} onChange={e => updateItem.mutate({ itemId: (it as any)._id || (it as any).id, patch: { response: e.target.value as ItemResponse } })}>
@@ -123,7 +123,7 @@ export function AssessmentDetail({ token }: { token: string }) {
               <option>Medium</option>
               <option>High</option>
             </select>
-            <button type="submit" disabled={addItem.isPending}>Add</button>
+            <button type="submit" className="btn btn--primary" disabled={addItem.isPending}>Add</button>
           </div>
         </form>
       </section>

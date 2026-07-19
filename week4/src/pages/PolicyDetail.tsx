@@ -176,13 +176,13 @@ export function PolicyDetail({ token }: { token: string }) {
   }
 
   if (isFetching) return <div>Loading…</div>
-  if (error) return <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>
+  if (error) return <div className="text-danger">{String((error as any)?.message || 'Failed to load')}</div>
   if (!data) return <div>Not found</div>
 
   return (
     <div>
       <div style={{ marginBottom: 12 }}>
-        <button onClick={() => navigate('/policies')}>{'< Back'}</button>
+        <button className="btn" onClick={() => navigate('/policies')}>{'< Back'}</button>
       </div>
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 10 }}>
         <label>
@@ -222,26 +222,26 @@ export function PolicyDetail({ token }: { token: string }) {
               <option value="CCPA">CCPA</option>
             </select>
             <input type="file" accept="application/json" onChange={onCompanyFile} />
-            <button type="button" onClick={() => genTemplates.mutate()} disabled={genTemplates.isPending}>Generate (template)</button>
-            <button type="button" onClick={() => exp.mutate()} disabled={exp.isPending}>Export</button>
+            <button type="button" className="btn" onClick={() => genTemplates.mutate()} disabled={genTemplates.isPending}>Generate (template)</button>
+            <button type="button" className="btn" onClick={() => exp.mutate()} disabled={exp.isPending}>Export</button>
             <button type="button" className="btn btn--primary" onClick={() => pdf.mutate()} disabled={pdf.isPending}>
               {pdf.isPending ? 'Preparing PDF…' : 'Download PDF'}
             </button>
           </div>
-          <div ref={editorEl} style={{ background: '#111827', color: '#e5e7eb', border: '1px solid var(--border)', borderRadius: 8 }} />
+          <div ref={editorEl} style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 8 }} />
         </div>
         <label>
           <div>Change note (optional)</div>
           <input value={note} onChange={e => setNote(e.target.value)} placeholder="Describe what changed" />
         </label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="submit" disabled={update.isPending}>Save</button>
-          <button type="button" onClick={() => del.mutate()} disabled={del.isPending}>Delete</button>
+          <button type="submit" className="btn btn--primary" disabled={update.isPending}>Save</button>
+          <button type="button" className="btn btn--danger" onClick={() => del.mutate()} disabled={del.isPending}>Delete</button>
           {form.status !== 'In Review' && form.status !== 'Approved' && (
-            <button type="button" onClick={() => submitReview.mutate()} disabled={submitReview.isPending}>Submit for review</button>
+            <button type="button" className="btn" onClick={() => submitReview.mutate()} disabled={submitReview.isPending}>Submit for review</button>
           )}
           {form.status === 'In Review' && me.data?.role === 'admin' && (
-            <button type="button" onClick={() => approve.mutate()} disabled={approve.isPending}>Approve (admin)</button>
+            <button type="button" className="btn" onClick={() => approve.mutate()} disabled={approve.isPending}>Approve (admin)</button>
           )}
         </div>
       </form>
@@ -251,21 +251,21 @@ export function PolicyDetail({ token }: { token: string }) {
         <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
           <textarea rows={4} value={genPrompt} onChange={e => setGenPrompt(e.target.value)} placeholder="Describe the policy context or any specific requirements…" />
           <div>
-            <button type="button" onClick={() => gen.mutate()} disabled={gen.isPending}>
+            <button type="button" className="btn" onClick={() => gen.mutate()} disabled={gen.isPending}>
               {gen.isPending ? 'Generating…' : 'Generate draft'}
             </button>
-            {gen.isError && <span style={{ color: '#fca5a5', marginLeft: 8 }}>{String((gen.error as any)?.message || 'Failed')}</span>}
-            {gen.isSuccess && <span style={{ color: '#34d399', marginLeft: 8 }}>Draft generated. Review and Save.</span>}
+            {gen.isError && <span className="text-danger" style={{ marginLeft: 8 }}>{String((gen.error as any)?.message || 'Failed')}</span>}
+            {gen.isSuccess && <span style={{ color: 'var(--status-approved)', marginLeft: 8 }}>Draft generated. Review and Save.</span>}
           </div>
           {gen.isPending || genPct > 0 ? (
-            <div style={{ height: 8, background: '#111827', borderRadius: 6, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${genPct}%`, background: '#22c55e', transition: 'width 0.4s ease' }} />
+            <div style={{ height: 8, background: 'var(--bg-elevated)', borderRadius: 6, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${genPct}%`, background: 'var(--status-approved)', transition: 'width 0.4s ease' }} />
             </div>
           ) : null}
         </div>
 
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Preview (sanitized)</div>
-        <div style={{ border: '1px solid #1f2937', padding: 12, borderRadius: 8, marginBottom: 16 }}
+        <div className="card" style={{ marginBottom: 16 }}
              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.content || '') }} />
 
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Versions</div>
@@ -274,7 +274,7 @@ export function PolicyDetail({ token }: { token: string }) {
           <ul style={{ paddingLeft: 18 }}>
             {versionsQ.data.versions.map((v, idx) => (
               <li key={idx} style={{ marginBottom: 6 }}>
-                <div style={{ color: '#9ca3af' }}>{new Date(v.createdAt).toLocaleString()} {v.note ? `— ${v.note}` : ''}</div>
+                <div className="text-muted">{new Date(v.createdAt).toLocaleString()} {v.note ? `— ${v.note}` : ''}</div>
                 <details>
                   <summary>View content</summary>
                   <pre style={{ whiteSpace: 'pre-wrap' }}>{v.content}</pre>
@@ -283,7 +283,7 @@ export function PolicyDetail({ token }: { token: string }) {
             ))}
           </ul>
         ) : (
-          <div style={{ color: '#94a3b8' }}>No versions yet.</div>
+          <div className="text-muted">No versions yet.</div>
         )}
 
         {/* Diff to last version */}
@@ -292,13 +292,13 @@ export function PolicyDetail({ token }: { token: string }) {
           {(() => {
             const last = versionsQ.data?.versions?.[versionsQ.data.versions.length - 1]?.content
             const current = form.content || ''
-            if (!last) return <div style={{ color: '#94a3b8' }}>No previous version to diff.</div>
+            if (!last) return <div className="text-muted">No previous version to diff.</div>
             const parts = diffWords(last, current)
             return (
-              <div style={{ border: '1px solid #1f2937', padding: 12, borderRadius: 8 }}>
+              <div className="card">
                 {parts.map((p: Change, i: number) => (
                   <span key={i} style={{
-                    background: p.added ? 'rgba(34,197,94,0.25)' : p.removed ? 'rgba(239,68,68,0.25)' : 'transparent',
+                    background: p.added ? 'rgba(16, 185, 129, 0.25)' : p.removed ? 'rgba(239, 68, 68, 0.25)' : 'transparent',
                     textDecoration: p.removed ? 'line-through' : 'none'
                   }}>{p.value}</span>
                 ))}

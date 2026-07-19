@@ -65,9 +65,11 @@ export function Soc2({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div>
-        <div style={{ fontWeight: 700, marginBottom: 12 }}>SOC 2 Controls</div>
-        <div style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10 }}>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <div className="page-header">
+          <div className="page-header__title">SOC 2 Controls</div>
+        </div>
+        <div className="card">
           Loading...
         </div>
       </div>
@@ -76,9 +78,11 @@ export function Soc2({ token }: { token: string }) {
 
   if (error) {
     return (
-      <div>
-        <div style={{ fontWeight: 700, marginBottom: 12 }}>SOC 2 Controls</div>
-        <div style={{ border: '1px solid var(--border)', background: '#111827', padding: 12, borderRadius: 10, color: '#ef4444' }}>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <div className="page-header">
+          <div className="page-header__title">SOC 2 Controls</div>
+        </div>
+        <div className="card text-danger">
           {error}
         </div>
       </div>
@@ -88,50 +92,53 @@ export function Soc2({ token }: { token: string }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'implemented':
-        return { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', text: '#10b981' }
+        return { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', text: 'var(--status-approved)' }
       case 'partial':
-        return { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', text: '#f59e0b' }
+        return { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', text: 'var(--status-pending)' }
       case 'not_implemented':
-        return { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', text: '#ef4444' }
+        return { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', text: 'var(--status-danger)' }
       default:
-        return { bg: 'rgba(107, 114, 128, 0.1)', border: 'rgba(107, 114, 128, 0.3)', text: '#6b7280' }
+        return { bg: 'rgba(107, 114, 128, 0.1)', border: 'rgba(107, 114, 128, 0.3)', text: 'var(--text-muted)' }
     }
   }
 
   const implementationPercentage = summary ? Math.round((summary.implemented / summary.total) * 100) : 0
+  const percentageColor = implementationPercentage >= 70 ? 'var(--status-approved)' : implementationPercentage >= 40 ? 'var(--status-pending)' : 'var(--status-danger)'
 
   return (
-    <div>
-      <div style={{ fontWeight: 700, marginBottom: 12 }}>SOC 2 Controls</div>
-      
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">SOC 2 Controls</div>
+      </div>
+
       {/* Summary Card */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Implementation Status</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#f3f4f6' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Implementation Status</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
               {summary?.implemented || 0} of {summary?.total || 0} controls implemented
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: implementationPercentage >= 70 ? '#10b981' : implementationPercentage >= 40 ? '#f59e0b' : '#ef4444' }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: percentageColor }}>
               {implementationPercentage}%
             </div>
           </div>
         </div>
-        
+
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>Implemented</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#10b981' }}>{summary?.implemented || 0}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Implemented</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--status-approved)' }}>{summary?.implemented || 0}</div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>Partial</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#f59e0b' }}>{summary?.partial || 0}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Partial</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--status-pending)' }}>{summary?.partial || 0}</div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>Not Implemented</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#ef4444' }}>{summary?.not_implemented || 0}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Not Implemented</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--status-danger)' }}>{summary?.not_implemented || 0}</div>
           </div>
         </div>
       </div>
@@ -157,7 +164,7 @@ export function Soc2({ token }: { token: string }) {
                   onClick={() => setSelectedControl(control)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td style={{ fontFamily: 'monospace' }}>{control.controlId}</td>
+                  <td className="mono">{control.controlId}</td>
                   <td>{control.category}</td>
                   <td>{control.title}</td>
                   <td>
@@ -209,15 +216,15 @@ export function Soc2({ token }: { token: string }) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 14, color: '#9ca3af', marginBottom: 4 }}>{selectedControl.controlId}</div>
+                <div className="mono" style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>{selectedControl.controlId}</div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>{selectedControl.title}</div>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedControl(null)}
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  color: '#9ca3af', 
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
                   fontSize: 24,
                   cursor: 'pointer'
                 }}
@@ -227,17 +234,17 @@ export function Soc2({ token }: { token: string }) {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Category</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Category</div>
               <div>{selectedControl.category}</div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Description</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Description</div>
               <div style={{ lineHeight: 1.6 }}>{selectedControl.description}</div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Status</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Status</div>
               {isAdmin ? (
                 <div style={{ display: 'flex', gap: 8 }}>
                   {(['implemented', 'partial', 'not_implemented'] as const).map((status) => {
@@ -249,7 +256,7 @@ export function Soc2({ token }: { token: string }) {
                         style={{
                           background: selectedControl.status === status ? colors.bg : 'transparent',
                           border: `1px solid ${selectedControl.status === status ? colors.border : 'var(--border)'}`,
-                          color: selectedControl.status === status ? colors.text : '#9ca3af',
+                          color: selectedControl.status === status ? colors.text : 'var(--text-secondary)',
                           padding: '6px 12px',
                           borderRadius: '6px',
                           fontSize: '12px',
@@ -280,12 +287,12 @@ export function Soc2({ token }: { token: string }) {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Owner</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Owner</div>
               <div>{selectedControl.owner}</div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Evidence</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Evidence</div>
               {selectedControl.evidence.length > 0 ? (
                 <ul style={{ margin: 0, paddingLeft: 20 }}>
                   {selectedControl.evidence.map((item, idx) => (
@@ -293,12 +300,12 @@ export function Soc2({ token }: { token: string }) {
                   ))}
                 </ul>
               ) : (
-                <div style={{ color: '#6b7280' }}>No evidence items</div>
+                <div className="text-muted">No evidence items</div>
               )}
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Notes</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Notes</div>
               {isAdmin ? (
                 <textarea
                   value={selectedControl.notes}
@@ -319,7 +326,7 @@ export function Soc2({ token }: { token: string }) {
               )}
             </div>
 
-            <div style={{ fontSize: 12, color: '#6b7280' }}>
+            <div className="text-muted" style={{ fontSize: 12 }}>
               Last reviewed: {new Date(selectedControl.lastReviewed).toLocaleDateString()}
             </div>
           </div>

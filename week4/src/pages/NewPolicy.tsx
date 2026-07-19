@@ -57,12 +57,14 @@ export function NewPolicy({ token }: { token: string }) {
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 12 }}>
-        <button onClick={() => navigate('/policies')}>{'< Back'}</button>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">New Policy</div>
+        <div className="page-header__actions">
+          <button className="btn" onClick={() => navigate('/policies')}>{'< Back'}</button>
+        </div>
       </div>
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 10 }}>
-        <div style={{ fontWeight: 600 }}>New Policy</div>
+      <form onSubmit={onSubmit} className="card" style={{ display: 'grid', gap: 10 }}>
         <label>
           <div>Name</div>
           <input value={name} onChange={e => setName(e.target.value)} required />
@@ -114,7 +116,7 @@ export function NewPolicy({ token }: { token: string }) {
               <input value={dataRetentionMonths} onChange={e => setDataRetentionMonths(e.target.value)} />
             </label>
             <div>
-              <button type="button" onClick={() => {
+              <button type="button" className="btn" onClick={() => {
                 const tplDef = tplKey ? TEMPLATES[tplKey] : undefined
                 const rendered = tplDef ? renderTemplate(tplDef.content, {
                   company,
@@ -148,7 +150,7 @@ export function NewPolicy({ token }: { token: string }) {
           </label>
         )}
         <div>
-          <button type="submit" disabled={create.isPending}>{create.isPending ? 'Creating…' : 'Create policy'}</button>
+          <button type="submit" className="btn btn--primary" disabled={create.isPending}>{create.isPending ? 'Creating…' : 'Create policy'}</button>
         </div>
       </form>
     </div>

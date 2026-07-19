@@ -52,19 +52,17 @@ export function Dashboard({ token }: { token: string }) {
 
   const loc = useLocation()
 
-  function navStyle(active: boolean) {
-    return {
-      padding: '8px 10px',
-      borderRadius: 8,
-      border: '1px solid var(--border)',
-      background: active ? '#111827' : 'transparent',
-    } as React.CSSProperties
+  function getRiskTone(score: number) {
+    if (score >= 75) return 'good'
+    if (score >= 50) return 'warning'
+    return 'danger'
   }
 
-  function getRiskColor(score: number) {
-    if (score >= 75) return { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', text: '#10b981' }
-    if (score >= 50) return { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', text: '#f59e0b' }
-    return { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', text: '#ef4444' }
+  function getRiskColorVar(score: number) {
+    const tone = getRiskTone(score)
+    if (tone === 'good') return 'var(--status-approved)'
+    if (tone === 'warning') return 'var(--status-pending)'
+    return 'var(--status-danger)'
   }
 
   function getTrendIcon(trend: string) {
@@ -88,155 +86,103 @@ export function Dashboard({ token }: { token: string }) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16 }}>
+    <div className="dashboard-layout">
       {/* Sidebar */}
-      <aside style={{ background: '#0b1220', border: '1px solid var(--border)', borderRadius: 10, padding: 10, height: 'fit-content' }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>CPA for SMBs</div>
-        <nav style={{ display: 'grid', gap: 6 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname === '/' )}>Dashboard</div>
-          </Link>
-          <Link to="/policies" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/policies'))}>Policies</div>
-          </Link>
-          <Link to="/audits" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/audits'))}>Audits</div>
-          </Link>
-          <Link to="/assessments" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/assessments'))}>Assessments</div>
-          </Link>
-          <Link to="/vendors" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/vendors'))}>Vendors</div>
-          </Link>
-          <Link to="/soc2" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/soc2'))}>SOC 2</div>
-          </Link>
-          <Link to="/settings" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/settings'))}>Settings</div>
-          </Link>
+      <aside className="sidebar">
+        <div className="sidebar__title">CPA for SMBs</div>
+        <nav className="sidebar__nav">
+          <Link to="/" className={`sidebar-link${loc.pathname === '/' ? ' sidebar-link--active' : ''}`}>Dashboard</Link>
+          <Link to="/policies" className={`sidebar-link${loc.pathname.startsWith('/policies') ? ' sidebar-link--active' : ''}`}>Policies</Link>
+          <Link to="/audits" className={`sidebar-link${loc.pathname.startsWith('/audits') ? ' sidebar-link--active' : ''}`}>Audits</Link>
+          <Link to="/assessments" className={`sidebar-link${loc.pathname.startsWith('/assessments') ? ' sidebar-link--active' : ''}`}>Assessments</Link>
+          <Link to="/vendors" className={`sidebar-link${loc.pathname.startsWith('/vendors') ? ' sidebar-link--active' : ''}`}>Vendors</Link>
+          <Link to="/soc2" className={`sidebar-link${loc.pathname.startsWith('/soc2') ? ' sidebar-link--active' : ''}`}>SOC 2</Link>
+          <Link to="/settings" className={`sidebar-link${loc.pathname.startsWith('/settings') ? ' sidebar-link--active' : ''}`}>Settings</Link>
         </nav>
       </aside>
 
       {/* Main content */}
-      <section style={{ display: 'grid', gap: 16 }}>
+      <section className="page-content">
         {/* Top row: title + search + actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 700 }}>Compliance & Policy Automation — Dashboard</div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="page-header">
+          <div className="page-header__title">Compliance & Policy Automation — Dashboard</div>
+          <div className="page-header__actions">
             <input
+              className="search-input"
               placeholder="Search policies..."
-              style={{ minWidth: 260 }}
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' }) }}
             />
-            <button onClick={() => navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' })}>Search</button>
-            <button onClick={() => void downloadReport()} disabled={reportDownloading}>
+            <button className="btn" onClick={() => navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' })}>Search</button>
+            <button className="btn" onClick={() => void downloadReport()} disabled={reportDownloading}>
               {reportDownloading ? 'Preparing Report…' : 'Download Compliance Report'}
             </button>
-            <button onClick={() => navigate('/policies/new')} style={{ background: '#059669', borderColor: '#065f46' }}>New Policy</button>
+            <button className="btn btn--primary" onClick={() => navigate('/policies/new')}>New Policy</button>
           </div>
         </div>
 
         {/* Overall Risk Score */}
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>OVERALL COMPLIANCE SCORE</div>
-          <div style={{ 
-            fontSize: 64, 
-            fontWeight: 800, 
-            color: getRiskColor(overallRiskScore).text,
-            marginBottom: 8
-          }}>
-            {overallRiskScore}
-          </div>
-          <div style={{ fontSize: 14, color: '#9ca3af' }}>out of 100</div>
+        <div className="card overall-score">
+          <div className="stat-tile-label">Overall Compliance Score</div>
+          <div className="stat-tile-value" style={{ color: getRiskColorVar(overallRiskScore) }}>{overallRiskScore}</div>
+          <div className="stat-tile-sub">out of 100</div>
         </div>
 
         {/* Risk Category Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
-          {riskScores.map((risk) => {
-            const colors = getRiskColor(risk.score)
-            return (
-              <div 
-                key={risk.category}
-                className="card"
-                style={{ 
-                  textAlign: 'center',
-                  borderColor: colors.border,
-                  background: colors.bg
-                }}
-              >
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {risk.category}
-                </div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: colors.text, marginBottom: 4 }}>
-                  {risk.score}
-                </div>
-                <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
-                  / 100
-                </div>
-                <div style={{ fontSize: 18, color: colors.text }}>
-                  {getTrendIcon(risk.trend)}
-                </div>
-              </div>
-            )
-          })}
+        <div className="risk-grid">
+          {riskScores.map((risk) => (
+            <div key={risk.category} className={`card risk-card risk-tone--${getRiskTone(risk.score)}`}>
+              <div className="risk-card__label">{risk.category}</div>
+              <div className="risk-card__value">{risk.score}</div>
+              <div className="risk-card__scale">/ 100</div>
+              <div className="risk-card__trend">{getTrendIcon(risk.trend)}</div>
+            </div>
+          ))}
         </div>
 
         {/* CSS Bar Chart */}
         <div className="card">
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Risk Scores by Category</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {riskScores.map((risk) => {
-              const colors = getRiskColor(risk.score)
-              return (
-                <div key={risk.category} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 140, fontSize: 13, color: '#9ca3af' }}>{risk.category}</div>
-                  <div style={{ flex: 1, height: 24, background: '#1a2332', borderRadius: 4, overflow: 'hidden' }}>
-                    <div 
-                      style={{ 
-                        height: '100%', 
-                        width: `${risk.score}%`, 
-                        background: colors.text,
-                        transition: 'width 0.3s ease'
-                      }}
-                    />
-                  </div>
-                  <div style={{ width: 80, textAlign: 'right', fontSize: 14, fontWeight: 600, color: colors.text }}>
-                    {risk.score} {getTrendIcon(risk.trend)}
-                  </div>
+          <div className="chart-title">Risk Scores by Category</div>
+          <div className="risk-chart">
+            {riskScores.map((risk) => (
+              <div key={risk.category} className={`risk-chart__row risk-tone--${getRiskTone(risk.score)}`}>
+                <div className="risk-chart__label">{risk.category}</div>
+                <div className="risk-chart__track">
+                  <div className="risk-chart__bar" style={{ width: `${risk.score}%` }} />
                 </div>
-              )
-            })}
+                <div className="risk-chart__value">{risk.score} {getTrendIcon(risk.trend)}</div>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Metrics cards */}
         {isFetching || auditsQ.isFetching ? (
-          <div style={{ color: '#94a3b8' }}>Loading metrics…</div>
+          <div className="text-muted">Loading metrics…</div>
         ) : error ? (
-          <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>
+          <div className="text-danger">{String((error as any)?.message || 'Failed to load')}</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 16 }}>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>OPEN ISSUES</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{openFindings}</div>
-              <div style={{ color: '#94a3b8' }}>Open findings</div>
+          <div className="metric-grid">
+            <div className="stat-tile">
+              <div className="stat-tile-label">Open Issues</div>
+              <div className="stat-tile-value">{openFindings}</div>
+              <div className="stat-tile-sub">Open findings</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>POLICY COVERAGE</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{coverage}%</div>
-              <div style={{ color: '#94a3b8' }}>Target 95%</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Policy Coverage</div>
+              <div className="stat-tile-value">{coverage}%</div>
+              <div className="stat-tile-sub">Target 95%</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>UPCOMING AUDITS</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{upcoming.count}</div>
-              <div style={{ color: '#94a3b8' }}>Next: {upcoming.next}</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Upcoming Audits</div>
+              <div className="stat-tile-value">{upcoming.count}</div>
+              <div className="stat-tile-sub">Next: {upcoming.next}</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>ASSESSMENTS</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{completedAssessments}/{totalAssessments}</div>
-              <div style={{ color: '#94a3b8' }}>Completed assessments</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Assessments</div>
+              <div className="stat-tile-value">{completedAssessments}/{totalAssessments}</div>
+              <div className="stat-tile-sub">Completed assessments</div>
             </div>
           </div>
         )}

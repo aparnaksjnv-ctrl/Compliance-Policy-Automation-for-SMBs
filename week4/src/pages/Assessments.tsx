@@ -67,29 +67,32 @@ export function Assessments({ token }: { token: string }) {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-        <input placeholder="Search" value={q} onChange={e => setQ(e.target.value)} />
-        <select value={status} onChange={e => setStatus(e.target.value as any)}>
-          <option>All</option>
-          <option>Draft</option>
-          <option>In Progress</option>
-          <option>Completed</option>
-        </select>
-        <select value={framework} onChange={e => setFramework(e.target.value as any)}>
-          <option>All</option>
-          <option>GDPR</option>
-          <option>HIPAA</option>
-          <option>CCPA</option>
-          <option>Other</option>
-        </select>
-        <input type="date" value={dueBefore} onChange={e => setDueBefore(e.target.value)} title="Due before" />
-        <button onClick={() => listQ.refetch()} disabled={listQ.isFetching}>Refresh</button>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">Assessments</div>
+        <div className="page-header__actions">
+          <input placeholder="Search" value={q} onChange={e => setQ(e.target.value)} />
+          <select value={status} onChange={e => setStatus(e.target.value as any)}>
+            <option>All</option>
+            <option>Draft</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
+          <select value={framework} onChange={e => setFramework(e.target.value as any)}>
+            <option>All</option>
+            <option>GDPR</option>
+            <option>HIPAA</option>
+            <option>CCPA</option>
+            <option>Other</option>
+          </select>
+          <input type="date" value={dueBefore} onChange={e => setDueBefore(e.target.value)} title="Due before" />
+          <button className="btn" onClick={() => listQ.refetch()} disabled={listQ.isFetching}>Refresh</button>
+        </div>
       </div>
 
-      {listQ.error && <div style={{ color: '#fca5a5' }}>{String((listQ.error as any)?.message || 'Failed to load')}</div>}
+      {listQ.error && <div className="text-danger">{String((listQ.error as any)?.message || 'Failed to load')}</div>}
 
-      <form onSubmit={onCreate} style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+      <form onSubmit={onCreate} className="card" style={{ display: 'grid', gap: 10 }}>
         <div style={{ fontWeight: 600 }}>New Assessment</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input name="name" placeholder="Name" required />
@@ -106,27 +109,27 @@ export function Assessments({ token }: { token: string }) {
             <option>In Progress</option>
             <option>Completed</option>
           </select>
-          <button type="submit" disabled={create.isPending}>Create</button>
+          <button type="submit" className="btn btn--primary" disabled={create.isPending}>Create</button>
         </div>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Name</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Owner</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Framework</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Due</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Status</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Progress</th>
+          <tr>
+            <th>Name</th>
+            <th>Owner</th>
+            <th>Framework</th>
+            <th>Due</th>
+            <th>Status</th>
+            <th>Progress</th>
           </tr>
         </thead>
         <tbody>
           {listQ.isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
               {Array.from({ length: 6 }).map((_, j) => (
-                <td key={j} style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                  <div style={{ height: 14, background: '#111827', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
+                <td key={j}>
+                  <div style={{ height: 14, background: 'var(--bg-surface)', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
                 </td>
               ))}
             </tr>
@@ -135,18 +138,18 @@ export function Assessments({ token }: { token: string }) {
             const c = counts(a)
             return (
               <tr key={a.id || a._id}>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}><Link to={`/assessments/${a.id || a._id}`}>{a.name}</Link></td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.owner}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.framework || '-'}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{a.status}</td>
-                <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{c.yes}/{c.total} Yes ({c.no} No)</td>
+                <td><Link to={`/assessments/${a.id || a._id}`}>{a.name}</Link></td>
+                <td>{a.owner}</td>
+                <td>{a.framework || '-'}</td>
+                <td>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
+                <td>{a.status}</td>
+                <td>{c.yes}/{c.total} Yes ({c.no} No)</td>
               </tr>
             )
           })}
           {items.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ padding: '12px 6px', color: '#94a3b8' }}>No assessments yet</td>
+              <td colSpan={6} className="text-muted">No assessments yet</td>
             </tr>
           )}
         </tbody>

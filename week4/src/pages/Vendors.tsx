@@ -92,20 +92,10 @@ export function Vendors({ token }: { token: string }) {
   const filtered = useMemo(() => rows, [rows])
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input placeholder="Search vendors..." value={q} onChange={e => setQ(e.target.value)} style={{ minWidth: 220 }} />
-          <select value={risk} onChange={e => setRisk(e.target.value as any)}>
-            <option>All</option><option>Low</option><option>Medium</option><option>High</option>
-          </select>
-          <select value={status} onChange={e => setStatus(e.target.value as any)}>
-            <option>All</option><option>Compliant</option><option>Pending</option><option>Not Compliant</option>
-          </select>
-          <input placeholder="Framework (e.g., GDPR)" value={framework} onChange={e => setFramework(e.target.value)} style={{ width: 160 }} />
-          <button onClick={() => refresh()}>Filter</button>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">Vendors</div>
+        <div className="page-header__actions">
           <button className="btn" onClick={openCreate}>Add Vendor</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) { void onUploadCSV(f); (e.target as HTMLInputElement).value = '' } }} />
           <button className="btn" onClick={() => fileRef.current?.click()}>Upload CSV</button>
@@ -115,7 +105,19 @@ export function Vendors({ token }: { token: string }) {
         </div>
       </div>
 
-      {loading ? <div style={{ color: '#94a3b8' }}>Loading…</div> : err ? <div style={{ color: '#fca5a5' }}>{err}</div> : (
+      <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input placeholder="Search vendors..." value={q} onChange={e => setQ(e.target.value)} style={{ minWidth: 220 }} />
+        <select value={risk} onChange={e => setRisk(e.target.value as any)}>
+          <option>All</option><option>Low</option><option>Medium</option><option>High</option>
+        </select>
+        <select value={status} onChange={e => setStatus(e.target.value as any)}>
+          <option>All</option><option>Compliant</option><option>Pending</option><option>Not Compliant</option>
+        </select>
+        <input placeholder="Framework (e.g., GDPR)" value={framework} onChange={e => setFramework(e.target.value)} style={{ width: 160 }} />
+        <button className="btn" onClick={() => refresh()}>Filter</button>
+      </div>
+
+      {loading ? <div className="text-muted">Loading…</div> : err ? <div className="text-danger">{err}</div> : (
         <table className="table">
           <thead>
             <tr>
@@ -137,7 +139,7 @@ export function Vendors({ token }: { token: string }) {
                   {(v.standards && v.standards.length) ? (
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {v.standards.map(s => (
-                        <span key={s} style={{ padding: '2px 6px', borderRadius: 999, border: '1px solid var(--border)', background: '#0b1220' }}>{s}</span>
+                        <span key={s} style={{ padding: '2px 6px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--bg-base)' }}>{s}</span>
                       ))}
                     </div>
                   ) : '—'}
@@ -146,8 +148,8 @@ export function Vendors({ token }: { token: string }) {
                 <td>{v.status || '—'}</td>
                 <td>{v.lastAuditDate || '—'}</td>
                 <td style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                  <button onClick={() => openEdit(v)}>Edit</button>
-                  <button onClick={() => void onDelete(v)} style={{ background: '#7f1d1d', borderColor: '#7f1d1d' }}>Delete</button>
+                  <button className="btn" onClick={() => openEdit(v)}>Edit</button>
+                  <button className="btn btn--danger" onClick={() => void onDelete(v)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -157,7 +159,7 @@ export function Vendors({ token }: { token: string }) {
 
       {/* Modal */}
       {(editing !== undefined) && (editing === null || editing) && (
-        <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#0b1220' }}>
+        <div className="card">
           <div style={{ fontWeight: 700, marginBottom: 8 }}>{editing ? 'Edit Vendor' : 'Add Vendor'}</div>
           <div style={{ display: 'grid', gap: 8 }}>
             <input placeholder="Vendor Name" value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />

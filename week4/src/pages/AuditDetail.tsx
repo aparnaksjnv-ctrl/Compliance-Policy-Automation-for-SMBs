@@ -48,51 +48,57 @@ export function AuditDetail({ token }: { token: string }) {
     updateAudit.mutate({ status: s })
   }
 
-  if (auditQ.isFetching && !a) return <div style={{ color: '#94a3b8' }}>Loading…</div>
-  if (auditQ.error) return <div style={{ color: '#fca5a5' }}>{String((auditQ.error as any)?.message || 'Failed to load')}</div>
+  if (auditQ.isFetching && !a) return <div className="text-muted">Loading…</div>
+  if (auditQ.error) return <div className="text-danger">{String((auditQ.error as any)?.message || 'Failed to load')}</div>
   if (!a) return null
 
   const openCount = (a.findings || []).filter(f => f.status === 'Open').length
 
+  function severityColor(severity: RiskSeverity) {
+    if (severity === 'High') return 'var(--status-danger)'
+    if (severity === 'Medium') return 'var(--status-pending)'
+    return 'var(--status-approved)'
+  }
+
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>{a.name}</div>
-          <div style={{ color: '#94a3b8' }}>Owner: {a.owner} {a.dueDate ? `• Due ${new Date(a.dueDate).toLocaleDateString()}` : ''}</div>
+          <div className="page-header__title">{a.name}</div>
+          <div style={{ color: 'var(--accent-soft)' }}>Owner: {a.owner} {a.dueDate ? `• Due ${new Date(a.dueDate).toLocaleDateString()}` : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <span style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 8 }}>{a.status}</span>
+        <div className="page-header__actions">
+          <span className="chip">{a.status}</span>
           {isAdmin && (
             <>
-              {a.status !== 'Draft' && <button onClick={() => setStatus('Draft')}>Mark Draft</button>}
-              {a.status !== 'In Progress' && <button onClick={() => setStatus('In Progress')}>Start</button>}
-              {a.status !== 'Closed' && openCount === 0 && <button onClick={() => setStatus('Closed')}>Close</button>}
+              {a.status !== 'Draft' && <button className="btn" onClick={() => setStatus('Draft')}>Mark Draft</button>}
+              {a.status !== 'In Progress' && <button className="btn" onClick={() => setStatus('In Progress')}>Start</button>}
+              {a.status !== 'Closed' && openCount === 0 && <button className="btn" onClick={() => setStatus('Closed')}>Close</button>}
             </>
           )}
         </div>
       </div>
 
       {/* Findings */}
-      <section style={{ border: '1px solid var(--border)', borderRadius: 10, background: '#111827', padding: 12 }}>
+      <section className="card">
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Findings ({openCount} open)</div>
         <div style={{ display: 'grid', gap: 8 }}>
           {(a.findings || []).map(f => (
             <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 8, padding: 10 }}>
               <div>
                 <div style={{ fontWeight: 600 }}>{f.title}</div>
-                <div style={{ color: '#94a3b8' }}>{f.description || ''}</div>
-                <div style={{ color: f.severity === 'High' ? '#f87171' : f.severity === 'Medium' ? '#fbbf24' : '#22c55e' }}>{f.severity}</div>
+                <div className="text-muted">{f.description || ''}</div>
+                <div style={{ color: severityColor(f.severity) }}>{f.severity}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span>{f.status}</span>
                 {f.status === 'Open' && (
-                  <button onClick={() => updateFinding.mutate({ fid: f.id, patch: { status: 'Resolved' } })}>
+                  <button className="btn" onClick={() => updateFinding.mutate({ fid: f.id, patch: { status: 'Resolved' } })}>
                     Resolve
                   </button>
                 )}
                 {f.status === 'Resolved' && isAdmin && (
-                  <button onClick={() => updateFinding.mutate({ fid: f.id, patch: { status: 'Open' } })}>
+                  <button className="btn" onClick={() => updateFinding.mutate({ fid: f.id, patch: { status: 'Open' } })}>
                     Re-open
                   </button>
                 )}
@@ -112,7 +118,7 @@ export function AuditDetail({ token }: { token: string }) {
               <option>Medium</option>
               <option>High</option>
             </select>
-            <button type="submit" disabled={addFinding.isPending}>Add</button>
+            <button type="submit" className="btn btn--primary" disabled={addFinding.isPending}>Add</button>
           </div>
         </form>
       </section>

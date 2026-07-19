@@ -75,8 +75,10 @@ export function Alerts({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div>
-        <div style={{ fontWeight: 700, marginBottom: 12 }}>Alerts</div>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <div className="page-header">
+          <div className="page-header__title">Alerts</div>
+        </div>
         <div className="card">Loading...</div>
       </div>
     )
@@ -84,34 +86,38 @@ export function Alerts({ token }: { token: string }) {
 
   if (error && !settings) {
     return (
-      <div>
-        <div style={{ fontWeight: 700, marginBottom: 12 }}>Alerts</div>
-        <div className="card" style={{ color: '#ef4444' }}>{error}</div>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <div className="page-header">
+          <div className="page-header__title">Alerts</div>
+        </div>
+        <div className="card text-danger">{error}</div>
       </div>
     )
   }
 
   return (
-    <div>
-      <div style={{ fontWeight: 700, marginBottom: 12 }}>Alerts</div>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">Alerts</div>
+      </div>
 
       {message && (
-        <div className="card" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981', marginBottom: 12 }}>
+        <div className="card" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: 'var(--status-approved)' }}>
           {message}
         </div>
       )}
 
       {error && (
-        <div className="card" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', marginBottom: 12 }}>
+        <div className="card" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: 'var(--status-danger)' }}>
           {error}
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card">
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Alert Settings</div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, color: '#9ca3af', display: 'block', marginBottom: 6 }}>Alert Email</label>
+          <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Alert Email</label>
           <input
             type="email"
             value={settings?.alertEmail || ''}
@@ -142,12 +148,12 @@ export function Alerts({ token }: { token: string }) {
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card">
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Test Email</div>
         <button
+          className="btn btn--primary"
           onClick={sendTestEmail}
           disabled={sending}
-          style={{ background: '#3b82f6', borderColor: '#2563eb' }}
         >
           {sending ? 'Sending...' : 'Send Test Email'}
         </button>
@@ -156,13 +162,13 @@ export function Alerts({ token }: { token: string }) {
       <div className="card">
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Recent Alerts</div>
         {recentAlerts.length === 0 ? (
-          <div style={{ color: '#6b7280' }}>No alerts sent yet.</div>
+          <div className="text-muted">No alerts sent yet.</div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {recentAlerts.map((alert, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: 10, background: '#111827', borderRadius: 6 }}>
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: 10, background: 'var(--bg-surface)', borderRadius: 6 }}>
                 <span>{alert.message}</span>
-                <span style={{ color: '#6b7280', fontSize: 12 }}>{new Date(alert.sentAt).toLocaleString()}</span>
+                <span className="text-muted" style={{ fontSize: 12 }}>{new Date(alert.sentAt).toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -177,7 +183,7 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       <div>
         <div style={{ fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: 12, color: '#6b7280' }}>{description}</div>
+        <div className="text-muted" style={{ fontSize: 12 }}>{description}</div>
       </div>
       <button
         onClick={() => onChange(!checked)}
@@ -186,7 +192,7 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
           height: 24,
           borderRadius: 12,
           border: 'none',
-          background: checked ? '#10b981' : '#4b5563',
+          background: checked ? 'var(--status-approved)' : 'var(--border-default)',
           position: 'relative',
           cursor: 'pointer',
           padding: 0,
@@ -200,7 +206,7 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
             width: 20,
             height: 20,
             borderRadius: '50%',
-            background: '#fff',
+            background: 'var(--text-primary)',
             transition: 'left 0.2s ease',
           }}
         />

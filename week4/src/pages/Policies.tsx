@@ -64,30 +64,33 @@ export function Policies({ token }: { token: string }) {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input placeholder="Search" value={q} onChange={e => setQ(e.target.value)} />
-        <select value={status} onChange={e => setStatus(e.target.value as any)}>
-          <option>All</option>
-          <option>Draft</option>
-          <option>In Review</option>
-          <option>Approved</option>
-        </select>
-        <select value={framework} onChange={e => setFramework(e.target.value as any)}>
-          <option>All</option>
-          <option>GDPR</option>
-          <option>HIPAA</option>
-          <option>CCPA</option>
-          <option>Other</option>
-        </select>
-        <button onClick={() => refetch()} disabled={isFetching}>Refresh</button>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div className="page-header">
+        <div className="page-header__title">Policies</div>
+        <div className="page-header__actions">
+          <input placeholder="Search" value={q} onChange={e => setQ(e.target.value)} />
+          <select value={status} onChange={e => setStatus(e.target.value as any)}>
+            <option>All</option>
+            <option>Draft</option>
+            <option>In Review</option>
+            <option>Approved</option>
+          </select>
+          <select value={framework} onChange={e => setFramework(e.target.value as any)}>
+            <option>All</option>
+            <option>GDPR</option>
+            <option>HIPAA</option>
+            <option>CCPA</option>
+            <option>Other</option>
+          </select>
+          <button className="btn" onClick={() => refetch()} disabled={isFetching}>Refresh</button>
+        </div>
       </div>
 
-      {error && <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>}
+      {error && <div className="text-danger">{String((error as any)?.message || 'Failed to load')}</div>}
 
-      <form onSubmit={onCreate} style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+      <form onSubmit={onCreate} className="card" style={{ display: 'grid', gap: 10 }}>
         <div style={{ fontWeight: 600 }}>New Policy</div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input name="name" placeholder="Name" required />
           <input name="owner" placeholder="Owner" required />
           <select name="status" defaultValue="Draft">
@@ -102,44 +105,44 @@ export function Policies({ token }: { token: string }) {
             <option>Other</option>
           </select>
           <input name="company" placeholder="Company (optional)" />
-          <button type="submit" disabled={create.isPending}>Create</button>
+          <button type="submit" className="btn btn--primary" disabled={create.isPending}>Create</button>
         </div>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Name</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Owner</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Framework</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>Status</th>
-            <th style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}></th>
+          <tr>
+            <th>Name</th>
+            <th>Owner</th>
+            <th>Framework</th>
+            <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
               {Array.from({ length: 5 }).map((_, j) => (
-                <td key={j} style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                  <div style={{ height: 14, background: '#111827', borderRadius: 6, opacity: 0.6, width: j===0? '60%': j===1? '40%': '30%' }} />
+                <td key={j}>
+                  <div style={{ height: 14, background: 'var(--bg-surface)', borderRadius: 6, opacity: 0.6, width: j===0? '60%': j===1? '40%': '30%' }} />
                 </td>
               ))}
             </tr>
           ))}
           {items.map(p => (
             <tr key={p.id || p._id}>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}><Link to={`/policies/${p.id || p._id}`}>{p.name}</Link></td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.owner}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.framework || '-'}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>{p.status}</td>
-              <td style={{ padding: '8px 6px', borderBottom: '1px solid #1f2937' }}>
-                <button onClick={() => del.mutate(p.id || p._id!)} disabled={del.isPending}>Delete</button>
+              <td><Link to={`/policies/${p.id || p._id}`}>{p.name}</Link></td>
+              <td>{p.owner}</td>
+              <td>{p.framework || '-'}</td>
+              <td>{p.status}</td>
+              <td>
+                <button className="btn btn--danger" onClick={() => del.mutate(p.id || p._id!)} disabled={del.isPending}>Delete</button>
               </td>
             </tr>
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ padding: '12px 6px', color: '#94a3b8' }}>No policies yet</td>
+              <td colSpan={5} className="text-muted">No policies yet</td>
             </tr>
           )}
         </tbody>
