@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* Layered dark surfaces */
   --bg-base: #0a0e17;
   --bg-elevated: #111827;
@@ -20,6 +20,16 @@
   --border-subtle: #1f2937;
   --border-default: #374151;
   --border-focus: #60a5fa;
+
+  /* Brand accent (teal) - matches the Login page palette */
+  --accent: #14b8a6;
+  --accent-soft: #5eead4;
+  --accent-faint: rgba(45, 212, 191, 0.15);
+  --accent-border: rgba(45, 212, 191, 0.3);
+  --brand-gradient: linear-gradient(145deg, #0f766e, #0f172a 72%);
+
+  /* Back-compat alias so older inline styles using var(--border) don't silently fail */
+  --border: var(--border-subtle);
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
@@ -302,4 +312,96 @@ a:hover {
   .table td {
     font-size: 13px;
   }
+}
+
+
+/* Sidebar (matches Login card + teal accent) */
+.sidebar {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.sidebar-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.sidebar-link--active {
+  background: var(--accent-faint);
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+
+.page-header {
+  background: var(--brand-gradient);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-tile {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-tile-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.stat-tile-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.stat-tile-sub {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 2px;
 }

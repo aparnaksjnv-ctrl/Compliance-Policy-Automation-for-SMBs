@@ -42,7 +42,7 @@ export function Dashboard({ token }: { token: string }) {
     const nextTs = upcomingAudits
       .map(a => new Date(a.dueDate!).getTime())
       .sort((a,b) => a-b)[0]
-    return { count: upcomingAudits.length, next: nextTs ? new Date(nextTs).toLocaleDateString() : '—' }
+    return { count: upcomingAudits.length, next: nextTs ? new Date(nextTs).toLocaleDateString() : '-' }
   }, [audits])
   const assessments = assessmentsQ.data?.items ?? []
   const completedAssessments = useMemo(() => assessments.filter(a => a.status === 'Completed').length, [assessments])
@@ -52,15 +52,6 @@ export function Dashboard({ token }: { token: string }) {
 
   const loc = useLocation()
 
-  function navStyle(active: boolean) {
-    return {
-      padding: '8px 10px',
-      borderRadius: 8,
-      border: '1px solid var(--border)',
-      background: active ? '#111827' : 'transparent',
-    } as React.CSSProperties
-  }
-
   function getRiskColor(score: number) {
     if (score >= 75) return { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', text: '#10b981' }
     if (score >= 50) return { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', text: '#f59e0b' }
@@ -69,9 +60,9 @@ export function Dashboard({ token }: { token: string }) {
 
   function getTrendIcon(trend: string) {
     switch (trend) {
-      case 'improving': return '↑'
-      case 'declining': return '↓'
-      default: return '→'
+      case 'improving': return String.fromCharCode(8593)
+      case 'declining': return String.fromCharCode(8595)
+      default: return String.fromCharCode(8594)
     }
   }
 
@@ -90,39 +81,25 @@ export function Dashboard({ token }: { token: string }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16 }}>
       {/* Sidebar */}
-      <aside style={{ background: '#0b1220', border: '1px solid var(--border)', borderRadius: 10, padding: 10, height: 'fit-content' }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>CPA for SMBs</div>
-        <nav style={{ display: 'grid', gap: 6 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname === '/' )}>Dashboard</div>
-          </Link>
-          <Link to="/policies" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/policies'))}>Policies</div>
-          </Link>
-          <Link to="/audits" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/audits'))}>Audits</div>
-          </Link>
-          <Link to="/assessments" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/assessments'))}>Assessments</div>
-          </Link>
-          <Link to="/vendors" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/vendors'))}>Vendors</div>
-          </Link>
-          <Link to="/soc2" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/soc2'))}>SOC 2</div>
-          </Link>
-          <Link to="/settings" style={{ textDecoration: 'none' }}>
-            <div style={navStyle(loc.pathname.startsWith('/settings'))}>Settings</div>
-          </Link>
+      <aside className="sidebar" style={{ height: 'fit-content' }}>
+        <div className="sidebar-title">CPA for SMBs</div>
+        <nav style={{ display: 'grid', gap: 4 }}>
+          <Link to="/" className={`sidebar-link ${loc.pathname === '/' ? 'sidebar-link--active' : ''}`}>Dashboard</Link>
+          <Link to="/policies" className={`sidebar-link ${loc.pathname.startsWith('/policies') ? 'sidebar-link--active' : ''}`}>Policies</Link>
+          <Link to="/audits" className={`sidebar-link ${loc.pathname.startsWith('/audits') ? 'sidebar-link--active' : ''}`}>Audits</Link>
+          <Link to="/assessments" className={`sidebar-link ${loc.pathname.startsWith('/assessments') ? 'sidebar-link--active' : ''}`}>Assessments</Link>
+          <Link to="/vendors" className={`sidebar-link ${loc.pathname.startsWith('/vendors') ? 'sidebar-link--active' : ''}`}>Vendors</Link>
+          <Link to="/soc2" className={`sidebar-link ${loc.pathname.startsWith('/soc2') ? 'sidebar-link--active' : ''}`}>SOC 2</Link>
+          <Link to="/settings" className={`sidebar-link ${loc.pathname.startsWith('/settings') ? 'sidebar-link--active' : ''}`}>Settings</Link>
         </nav>
       </aside>
 
       {/* Main content */}
       <section style={{ display: 'grid', gap: 16 }}>
         {/* Top row: title + search + actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 700 }}>Compliance & Policy Automation — Dashboard</div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="page-header">
+          <h1>Compliance &amp; Policy Automation - Dashboard</h1>
+          <div className="page-header-actions">
             <input
               placeholder="Search policies..."
               style={{ minWidth: 260 }}
@@ -130,26 +107,26 @@ export function Dashboard({ token }: { token: string }) {
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' }) }}
             />
-            <button onClick={() => navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' })}>Search</button>
-            <button onClick={() => void downloadReport()} disabled={reportDownloading}>
-              {reportDownloading ? 'Preparing Report…' : 'Download Compliance Report'}
+            <button className="btn" onClick={() => navigate({ pathname: '/policies', search: search ? `?q=${encodeURIComponent(search)}` : '' })}>Search</button>
+            <button className="btn" onClick={() => void downloadReport()} disabled={reportDownloading}>
+              {reportDownloading ? 'Preparing Report...' : 'Download Compliance Report'}
             </button>
-            <button onClick={() => navigate('/policies/new')} style={{ background: '#059669', borderColor: '#065f46' }}>New Policy</button>
+            <button className="btn btn--primary" onClick={() => navigate('/policies/new')}>New Policy</button>
           </div>
         </div>
 
         {/* Overall Risk Score */}
         <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>OVERALL COMPLIANCE SCORE</div>
-          <div style={{ 
-            fontSize: 64, 
-            fontWeight: 800, 
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>OVERALL COMPLIANCE SCORE</div>
+          <div style={{
+            fontSize: 64,
+            fontWeight: 800,
             color: getRiskColor(overallRiskScore).text,
             marginBottom: 8
           }}>
             {overallRiskScore}
           </div>
-          <div style={{ fontSize: 14, color: '#9ca3af' }}>out of 100</div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>out of 100</div>
         </div>
 
         {/* Risk Category Cards */}
@@ -157,22 +134,22 @@ export function Dashboard({ token }: { token: string }) {
           {riskScores.map((risk) => {
             const colors = getRiskColor(risk.score)
             return (
-              <div 
+              <div
                 key={risk.category}
                 className="card"
-                style={{ 
+                style={{
                   textAlign: 'center',
                   borderColor: colors.border,
                   background: colors.bg
                 }}
               >
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {risk.category}
                 </div>
                 <div style={{ fontSize: 32, fontWeight: 700, color: colors.text, marginBottom: 4 }}>
                   {risk.score}
                 </div>
-                <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
                   / 100
                 </div>
                 <div style={{ fontSize: 18, color: colors.text }}>
@@ -191,12 +168,12 @@ export function Dashboard({ token }: { token: string }) {
               const colors = getRiskColor(risk.score)
               return (
                 <div key={risk.category} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 140, fontSize: 13, color: '#9ca3af' }}>{risk.category}</div>
-                  <div style={{ flex: 1, height: 24, background: '#1a2332', borderRadius: 4, overflow: 'hidden' }}>
-                    <div 
-                      style={{ 
-                        height: '100%', 
-                        width: `${risk.score}%`, 
+                  <div style={{ width: 140, fontSize: 13, color: 'var(--text-secondary)' }}>{risk.category}</div>
+                  <div style={{ flex: 1, height: 24, background: 'var(--bg-surface)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${risk.score}%`,
                         background: colors.text,
                         transition: 'width 0.3s ease'
                       }}
@@ -213,30 +190,30 @@ export function Dashboard({ token }: { token: string }) {
 
         {/* Metrics cards */}
         {isFetching || auditsQ.isFetching ? (
-          <div style={{ color: '#94a3b8' }}>Loading metrics…</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Loading metrics...</div>
         ) : error ? (
           <div style={{ color: '#fca5a5' }}>{String((error as any)?.message || 'Failed to load')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 16 }}>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>OPEN ISSUES</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{openFindings}</div>
-              <div style={{ color: '#94a3b8' }}>Open findings</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Open Issues</div>
+              <div className="stat-tile-value">{openFindings}</div>
+              <div className="stat-tile-sub">Open findings</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>POLICY COVERAGE</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{coverage}%</div>
-              <div style={{ color: '#94a3b8' }}>Target 95%</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Policy Coverage</div>
+              <div className="stat-tile-value">{coverage}%</div>
+              <div className="stat-tile-sub">Target 95%</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>UPCOMING AUDITS</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{upcoming.count}</div>
-              <div style={{ color: '#94a3b8' }}>Next: {upcoming.next}</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Upcoming Audits</div>
+              <div className="stat-tile-value" style={{ fontSize: 22 }}>{upcoming.count}</div>
+              <div className="stat-tile-sub">Next: {upcoming.next}</div>
             </div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: '#111827' }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>ASSESSMENTS</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{completedAssessments}/{totalAssessments}</div>
-              <div style={{ color: '#94a3b8' }}>Completed assessments</div>
+            <div className="stat-tile">
+              <div className="stat-tile-label">Assessments</div>
+              <div className="stat-tile-value">{completedAssessments}/{totalAssessments}</div>
+              <div className="stat-tile-sub">Completed assessments</div>
             </div>
           </div>
         )}
