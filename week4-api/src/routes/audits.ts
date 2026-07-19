@@ -6,6 +6,21 @@ import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
 
+/**
+ * The client addresses audits and findings by `id`. Mongoose only exposes
+ * `_id` here (the `id` virtual is not serialized, and .lean() skips virtuals
+ * entirely), so add `id` explicitly on the way out.
+ */
+function serializeAudit(doc: any) {
+  if (!doc) return doc
+  const a = typeof doc.toObject === 'function' ? doc.toObject() : doc
+  return {
+    ...a,
+    id: String(a._id),
+    findings: (a.findings || []).map((f: any) => ({ ...f, id: String(f._id) })),
+  }
+}
+
 const auditSchema = z.object({
   name: z.string().min(2),
   owner: z.string().min(2),
@@ -31,7 +46,7 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => 
   }
 
   const list = await Audit.find(filter).sort({ updatedAt: -1 }).lean()
-  res.json({ items: list })
+  res.json({ items: list.map(serializeAudit) })
 }))
 
 router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
@@ -50,7 +65,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: AuthedRequest, res) =>
 router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const doc = await Audit.findOne({ _id: req.params.id, userId: req.userId })
   if (!doc) return res.status(404).json({ error: 'Not found' })
-  res.json(doc)
+  res.json(serializeAudit(doc))
 }))
 
 router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
