@@ -1,5 +1,18 @@
 const BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
 
+// Opt-in only. The audits endpoints used to fall back to fixture data on any
+// error, which made a dead backend look like a working app. Set
+// VITE_USE_MOCKS=true to develop against fixtures on purpose.
+const USE_MOCKS = String((import.meta as any).env?.VITE_USE_MOCKS || '') === 'true'
+
+function mocksDisabled(err: unknown): boolean {
+  if (USE_MOCKS) {
+    console.warn('[api] request failed; serving mock data (VITE_USE_MOCKS=true)', err)
+    return false
+  }
+  return true
+}
+
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   async function doFetch(base: string) {
     const res = await fetch(base + path, {
@@ -275,6 +288,7 @@ export const api = {
     try {
       return await request<{ items: Audit[] }>(`/audits?${qs.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
     } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.listAudits(params)
     }
@@ -282,7 +296,8 @@ export const api = {
   async getAudit(token: string, id: string) {
     try {
       return await request<Audit>(`/audits/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-    } catch {
+    } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.getAudit(id)
     }
@@ -292,7 +307,8 @@ export const api = {
       return await request<{ id: string }>(`/audits`, {
         method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` },
       })
-    } catch {
+    } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.createAudit(payload)
     }
@@ -302,7 +318,8 @@ export const api = {
       return await request<{ id: string }>(`/audits/${id}`, {
         method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` },
       })
-    } catch {
+    } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.updateAudit(id, payload)
     }
@@ -312,7 +329,8 @@ export const api = {
       return await request<{ id: string }>(`/audits/${auditId}/findings`, {
         method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` },
       })
-    } catch {
+    } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.addFinding(auditId, payload as any)
     }
@@ -322,7 +340,8 @@ export const api = {
       return await request<{ id: string }>(`/audits/${auditId}/findings/${findingId}`, {
         method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` },
       })
-    } catch {
+    } catch (e) {
+      if (mocksDisabled(e)) throw e
       const m = await import('./mocks/audits')
       return m.updateFinding(auditId, findingId, payload)
     }
