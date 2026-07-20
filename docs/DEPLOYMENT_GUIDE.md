@@ -9,6 +9,21 @@ re-checked rather than trusted.
 
 ---
 
+## 0. Live environments
+
+| | URL |
+|---|---|
+| Frontend (Netlify) | https://compliance-command-centre.netlify.app |
+| API (Railway) | https://week4-api-production.up.railway.app |
+
+Railway project `compliance-week4-api`, service `week4-api`, environment
+`production`. Netlify site `compliance-command-centre`
+(id `c19b96f6-7626-4bd0-9c35-4d622bb1f737`).
+
+Deployed and verified end to end on 2026-07-19 following §7.
+
+---
+
 ## 1. Architecture
 
 | Piece | Path | Local port | Deploy target |
@@ -212,3 +227,71 @@ means `CORS_ORIGIN` does not match — re-read §4.
 
 Then in the browser: load the Netlify URL, log in, and confirm the console is
 free of CORS errors and that Settings shows your real email and role.
+
+Confirmed in production: a **rejected origin returns 500, not 403** (§4.4). The
+preflight from the correct origin returns `204` with
+`access-control-allow-origin` echoing it exactly.
+
+---
+
+## 9. Renaming a deployment URL
+
+Renaming either side breaks the other until its counterpart is updated.
+
+### Frontend (Netlify subdomain)
+
+Netlify CLI 26.x has **no `sites:update` command** — only create/delete/list/
+search. Rename via the dashboard (Site configuration → Site details) or the API
+passthrough:
+
+```bash
+netlify api updateSite --data '{"site_id":"<id>","body":{"name":"<newname>"}}'
+```
+
+The site id is in `week4/.netlify/state.json`.
+
+**Then immediately update the API**, or every request fails as a 500:
+
+```bash
+cd week4-api
+railway variable set "CORS_ORIGIN=https://<newname>.netlify.app" --service week4-api
+```
+
+Railway redeploys on a variable change; wait for it before re-testing. No
+frontend rebuild is needed for this direction — only the frontend's own address
+changed, and `VITE_API_BASE_URL` still points at the same API.
+
+### Checking whether a subdomain is free
+
+`*.netlify.app` has **wildcard DNS**, so `nslookup` resolves for every name and
+is useless as an availability test. Use the HTTP status instead:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<name>.netlify.app
+# 404 = available; anything else (200/401/403) = taken by another account
+```
+
+An `updateSite` call with a taken name fails as `Unprocessable Entity`, which
+does not say the name is the problem — check availability first.
+
+### API (Railway domain)
+
+```bash
+railway domain update            # edit the generated service domain
+railway domain your-api.com      # attach a custom domain; returns DNS records
+```
+
+Changing the API URL **does** require a frontend rebuild, because Vite inlines
+`VITE_API_BASE_URL` at build time (§5):
+
+```bash
+cd week4
+netlify env:set VITE_API_BASE_URL "https://<new-api-url>"
+netlify deploy --build --prod
+```
+
+### Custom domains
+
+Dropping `.netlify.app` requires a registered domain. A custom domain is a new
+origin, so `CORS_ORIGIN` must be updated to match it or the app fails with the
+same misleading 500s.
