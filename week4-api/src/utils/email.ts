@@ -6,6 +6,17 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS)
 }
 
+/**
+ * Names where the missing variables actually have to go. On Railway there is
+ * no .env file, so pointing at one sends people looking in the wrong place.
+ */
+export function emailNotConfiguredMessage(): string {
+  const where = process.env.RAILWAY_ENVIRONMENT
+    ? 'as environment variables on the Railway service'
+    : 'in week4-api/.env'
+  return `Email delivery is not configured. Set EMAIL_USER and EMAIL_PASS ${where}.`
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
@@ -18,7 +29,7 @@ const transporter = nodemailer.createTransport({
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!isEmailConfigured()) {
-    throw new Error('Email delivery is not configured. Add EMAIL_USER and EMAIL_PASS to the API .env file.')
+    throw new Error(emailNotConfiguredMessage())
   }
 
   try {

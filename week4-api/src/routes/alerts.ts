@@ -2,7 +2,7 @@ import { Router, Response } from 'express'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
-import { isEmailConfigured, sendEmail } from '../utils/email'
+import { isEmailConfigured, sendEmail, emailNotConfiguredMessage } from '../utils/email'
 import { asyncHandler } from '../utils/asyncHandler'
 
 const router = Router()
@@ -11,7 +11,7 @@ const router = Router()
 router.post('/test', authMiddleware, asyncHandler(async (req: AuthedRequest, res: Response) => {
   try {
     if (!isEmailConfigured()) {
-      return res.status(503).json({ error: 'Email delivery is not configured. Add EMAIL_USER and EMAIL_PASS to the API .env file.' })
+      return res.status(503).json({ error: emailNotConfiguredMessage() })
     }
 
     const userId = req.userId!
