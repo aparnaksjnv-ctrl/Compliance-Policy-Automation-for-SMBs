@@ -318,7 +318,9 @@ router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequ
   const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!policy) return res.status(404).json({ error: 'Not found' })
 
-  const model = parsed.data.model || process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+  // gemini-flash-latest is the rolling free-tier alias; pinned versions can
+  // report a 0 free-tier quota depending on account/region.
+  const model = parsed.data.model || process.env.GEMINI_MODEL || 'gemini-flash-latest'
   const vars = parsed.data.variables || {}
   const varsList = Object.entries(vars)
     .filter(([_, v]) => typeof v === 'string' && v)
