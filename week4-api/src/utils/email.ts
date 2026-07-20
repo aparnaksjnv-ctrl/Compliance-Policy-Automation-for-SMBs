@@ -1,53 +1,66 @@
 import dns from 'node:dns'
-import nodemailer from 'nodemailer'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
 
-// Railway containers have no IPv6 egress, but Node otherwise prefers the AAAA
-// (IPv6) record for smtp.gmail.com, so the SMTP connect fails with
-// ENETUNREACH. Prefer IPv4 results for all lookups in this process.
+// Railway containers have no IPv6 egress, but Node otherwise prefers AAAA
+// (IPv6) records, so an outbound connect can fail/time out with ENETUNREACH.
+// This applies to the Resend API host too — keep IPv4 first for all lookups.
 dns.setDefaultResultOrder('ipv4first')
 
+// Email goes through Resend's HTTPS API (port 443) rather than SMTP, because
+// Railway blocks outbound SMTP ports (25/465/587) on its lower plans.
+const RESEND_ENDPOINT = 'https://api.resend.com/emails'
+
+// Without a verified domain, Resend only allows sending from this address, and
+// only to the email the Resend account was registered with. Override with
+// EMAIL_FROM once a domain is verified.
+const DEFAULT_FROM = 'Compliance Platform <onboarding@resend.dev>'
+
 export function isEmailConfigured(): boolean {
-  return Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS)
+  return Boolean(process.env.RESEND_API_KEY)
 }
 
 /**
- * Names where the missing variables actually have to go. On Railway there is
+ * Names where the missing variable actually has to go. On Railway there is
  * no .env file, so pointing at one sends people looking in the wrong place.
  */
 export function emailNotConfiguredMessage(): string {
   const where = process.env.RAILWAY_ENVIRONMENT
-    ? 'as environment variables on the Railway service'
+    ? 'as an environment variable on the Railway service'
     : 'in week4-api/.env'
-  return `Email delivery is not configured. Set EMAIL_USER and EMAIL_PASS ${where}.`
+  return `Email delivery is not configured. Set RESEND_API_KEY ${where}.`
 }
-
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-})
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!isEmailConfigured()) {
     throw new Error(emailNotConfiguredMessage())
   }
 
+  let res: Response
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'Compliance Platform <noreply@compliance.com>',
-      to,
-      subject,
-      html,
+    res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || DEFAULT_FROM,
+        to,
+        subject,
+        html,
+      }),
     })
   } catch (error) {
-    console.error('Failed to send email:', error)
+    console.error('Failed to reach Resend:', error)
     throw error
+  }
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    const message = `Resend returned ${res.status}: ${detail || res.statusText}`
+    console.error('Failed to send email:', message)
+    throw new Error(message)
   }
 }
 
