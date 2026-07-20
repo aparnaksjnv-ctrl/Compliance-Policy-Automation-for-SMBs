@@ -1,6 +1,12 @@
+import dns from 'node:dns'
 import nodemailer from 'nodemailer'
 import { AlertSettingsModel } from '../models/AlertSettings'
 import { User } from '../models/User'
+
+// Railway containers have no IPv6 egress, but Node otherwise prefers the AAAA
+// (IPv6) record for smtp.gmail.com, so the SMTP connect fails with
+// ENETUNREACH. Prefer IPv4 results for all lookups in this process.
+dns.setDefaultResultOrder('ipv4first')
 
 export function isEmailConfigured(): boolean {
   return Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS)

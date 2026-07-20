@@ -18,6 +18,12 @@ import { errorHandler } from './middleware/errorHandler'
 
 export const app = express()
 
+// Railway (and most PaaS) put one proxy hop in front of the app, which sets
+// X-Forwarded-For. Without this, express-rate-limit throws
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR. Trust exactly one hop rather than `true`,
+// so clients cannot spoof the header to evade the rate limiter.
+app.set('trust proxy', 1)
+
 const allowedOrigins = new Set([config.corsOrigin, 'http://localhost:5176', 'http://127.0.0.1:5176'])
 const loopbackOrigin = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/
 const corsOptions: CorsOptions = {
