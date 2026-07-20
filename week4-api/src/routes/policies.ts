@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import Anthropic from '@anthropic-ai/sdk'
 import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
@@ -302,9 +301,10 @@ Contracts restrict use of personal information to business purpose.
   res.json({ content: out })
 }))
 
-// AI-assisted draft generation (optional)
+// AI-assisted draft generation (optional). Uses Google Gemini's REST API,
+// which has a genuinely free tier. Configured via GEMINI_API_KEY.
 router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) return res.status(501).json({ error: 'AI generation not configured' })
 
   const genSchema = z.object({
@@ -318,7 +318,7 @@ router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequ
   const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!policy) return res.status(404).json({ error: 'Not found' })
 
-  const model = parsed.data.model || process.env.ANTHROPIC_MODEL || 'claude-opus-4-8'
+  const model = parsed.data.model || process.env.GEMINI_MODEL || 'gemini-2.0-flash'
   const vars = parsed.data.variables || {}
   const varsList = Object.entries(vars)
     .filter(([_, v]) => typeof v === 'string' && v)
@@ -333,20 +333,33 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
   const userMsg = parsed.data.prompt || 'Draft a concise, organization-ready policy based on the given framework and company context.'
 
   try {
-    const client = new Anthropic({ apiKey })
-    const message = await client.messages.create({
-      model,
-      max_tokens: 8192,
-      system,
-      messages: [{ role: 'user', content: userMsg }],
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
+      }),
     })
-    // content is a list of blocks; concatenate the text blocks.
-    const content = message.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map(b => b.text)
-      .join('')
-      .trim()
-    if (!content) return res.status(502).json({ error: 'No content from AI provider' })
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '')
+      return res.status(502).json({ error: `AI provider error: ${r.status} ${r.statusText} ${txt}` })
+    }
+    const data = await r.json() as any
+    // Gemini returns candidates[].content.parts[].text; concatenate the text parts.
+    const parts = data?.candidates?.[0]?.content?.parts
+    const content = Array.isArray(parts)
+      ? parts.map((p: any) => (typeof p?.text === 'string' ? p.text : '')).join('').trim()
+      : ''
+    if (!content) {
+      const blocked = data?.promptFeedback?.blockReason
+      return res.status(502).json({ error: blocked ? `Blocked by provider: ${blocked}` : 'No content from AI provider' })
+    }
 
     policy.content = content
     policy.versions = policy.versions || []
@@ -355,9 +368,6 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
 
     res.json({ content })
   } catch (e: any) {
-    if (e instanceof Anthropic.APIError) {
-      return res.status(502).json({ error: `AI provider error: ${e.status} ${e.message}` })
-    }
     res.status(500).json({ error: e?.message || 'Generation failed' })
   }
 }))
