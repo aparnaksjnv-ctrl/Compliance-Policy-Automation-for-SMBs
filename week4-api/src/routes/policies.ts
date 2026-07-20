@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import Anthropic from '@anthropic-ai/sdk'
 import { Policy, PolicyStatus } from '../models/Policy'
 import { authMiddleware, AuthedRequest } from '../middleware/auth'
 import { User } from '../models/User'
@@ -303,7 +304,7 @@ Contracts restrict use of personal information to business purpose.
 
 // AI-assisted draft generation (optional)
 router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return res.status(501).json({ error: 'AI generation not configured' })
 
   const genSchema = z.object({
@@ -317,7 +318,7 @@ router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequ
   const policy = await Policy.findOne({ _id: req.params.id, userId: req.userId })
   if (!policy) return res.status(404).json({ error: 'Not found' })
 
-  const model = parsed.data.model || process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  const model = parsed.data.model || process.env.ANTHROPIC_MODEL || 'claude-opus-4-8'
   const vars = parsed.data.variables || {}
   const varsList = Object.entries(vars)
     .filter(([_, v]) => typeof v === 'string' && v)
@@ -332,27 +333,19 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
   const userMsg = parsed.data.prompt || 'Draft a concise, organization-ready policy based on the given framework and company context.'
 
   try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.2,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userMsg },
-        ],
-      }),
+    const client = new Anthropic({ apiKey })
+    const message = await client.messages.create({
+      model,
+      max_tokens: 8192,
+      system,
+      messages: [{ role: 'user', content: userMsg }],
     })
-    if (!r.ok) {
-      const txt = await r.text().catch(() => '')
-      return res.status(502).json({ error: `AI provider error: ${r.status} ${r.statusText} ${txt}` })
-    }
-    const data = await r.json() as any
-    const content = data?.choices?.[0]?.message?.content?.trim()
+    // content is a list of blocks; concatenate the text blocks.
+    const content = message.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map(b => b.text)
+      .join('')
+      .trim()
     if (!content) return res.status(502).json({ error: 'No content from AI provider' })
 
     policy.content = content
@@ -362,6 +355,9 @@ Instructions: Keep sections with headings and bullet points where helpful. Do no
 
     res.json({ content })
   } catch (e: any) {
+    if (e instanceof Anthropic.APIError) {
+      return res.status(502).json({ error: `AI provider error: ${e.status} ${e.message}` })
+    }
     res.status(500).json({ error: e?.message || 'Generation failed' })
   }
 }))
