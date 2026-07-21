@@ -84,7 +84,10 @@ function ensureSpace(doc: PDFKit.PDFDocument, needed: number): void {
 function addSection(doc: PDFKit.PDFDocument, title: string): void {
   ensureSpace(doc, 42)
   doc.moveDown(0.7)
-  doc.font('Helvetica-Bold').fontSize(15).fillColor(NAVY).text(title)
+  // Pin to the left margin with an explicit width — otherwise the title
+  // inherits doc.x from the preceding absolute-positioned metric cards and
+  // renders near the right edge.
+  doc.font('Helvetica-Bold').fontSize(15).fillColor(NAVY).text(title, MARGIN, doc.y, { width: CONTENT_WIDTH })
   doc.moveTo(MARGIN, doc.y + 5).lineTo(PAGE_WIDTH - MARGIN, doc.y + 5).strokeColor('#cbd5e1').lineWidth(1).stroke()
   doc.moveDown(0.8)
 }
@@ -177,12 +180,12 @@ export async function generatePolicyPdf(input: PolicyPdfInput): Promise<Buffer> 
     addMetric(doc, 'Owner', input.owner || 'Unassigned', MARGIN + (metricWidth + 8) * 2, y, metricWidth)
     doc.y = y + 72
     addSection(doc, 'Policy Content')
-    doc.font('Helvetica').fontSize(10.5).fillColor(NAVY).text(stripHtml(input.content) || 'No policy content available.', { width: CONTENT_WIDTH, lineGap: 4, align: 'left' })
+    doc.font('Helvetica').fontSize(10.5).fillColor(NAVY).text(stripHtml(input.content) || 'No policy content available.', MARGIN, doc.y, { width: CONTENT_WIDTH, lineGap: 4, align: 'left' })
     addSection(doc, 'Document Information')
     doc.font('Helvetica').fontSize(9).fillColor(SLATE)
-      .text(`Company: ${input.companyName}`)
-      .text(`Generated: ${generatedAt.toISOString()}`)
-      .text('Classification: Confidential')
+      .text(`Company: ${input.companyName}`, MARGIN, doc.y, { width: CONTENT_WIDTH })
+      .text(`Generated: ${generatedAt.toISOString()}`, { width: CONTENT_WIDTH })
+      .text('Classification: Confidential', { width: CONTENT_WIDTH })
   })
 }
 
