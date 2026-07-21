@@ -1,3 +1,7 @@
+// Must be the first import: loads .env before any module below reads
+// process.env. A bare `dotenv.config()` statement would run too late,
+// because import/require evaluation is hoisted above plain statements.
+import 'dotenv/config'
 import mongoose from 'mongoose'
 import { Soc2ControlModel } from '../models/Soc2Control'
 import { connectDB, disconnectDB } from '../db'

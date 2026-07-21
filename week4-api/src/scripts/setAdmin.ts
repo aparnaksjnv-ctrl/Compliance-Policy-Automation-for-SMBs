@@ -1,3 +1,7 @@
+// Must be the first import: loads .env before any module below reads
+// process.env. This matters most here — ../config captures env values at
+// module load, so a bare `dotenv.config()` statement would run too late.
+import 'dotenv/config'
 import mongoose from 'mongoose'
 import { User } from '../models/User'
 import { config } from '../config'
