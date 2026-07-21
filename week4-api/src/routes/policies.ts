@@ -321,6 +321,7 @@ router.post('/:id/generate', authMiddleware, asyncHandler(async (req: AuthedRequ
   // gemini-flash-latest is the rolling free-tier alias; pinned versions can
   // report a 0 free-tier quota depending on account/region.
   const model = parsed.data.model || process.env.GEMINI_MODEL || 'gemini-flash-latest'
+  const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-flash-lite-latest'
   const vars = parsed.data.variables || {}
   const varsList = Object.entries(vars)
     .filter(([_, v]) => typeof v === 'string' && v)
@@ -334,23 +335,41 @@ Variables: ${varsList || 'None provided'}
 Instructions: Keep sections with headings and bullet points where helpful. Do not fabricate facts.`
   const userMsg = parsed.data.prompt || 'Draft a concise, organization-ready policy based on the given framework and company context.'
 
+  // Gemini returns 503/429 when a model is briefly overloaded. Retry with
+  // backoff, then fail over to a second model before giving up.
+  const candidates = [model, ...(model === GEMINI_FALLBACK_MODEL ? [] : [GEMINI_FALLBACK_MODEL])]
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: system }] },
+    contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
+  })
+
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
-      }),
-    })
-    if (!r.ok) {
-      const txt = await r.text().catch(() => '')
-      return res.status(502).json({ error: `AI provider error: ${r.status} ${r.statusText} ${txt}` })
+    let r: Response | undefined
+    let lastDetail = ''
+    outer: for (const candidate of candidates) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate)}:generateContent`
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body,
+        })
+        if (r.ok) break outer
+        lastDetail = await r.text().catch(() => '')
+        // Only 503/429 are worth retrying; anything else is a real error.
+        if (r.status !== 503 && r.status !== 429) break outer
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)))
+      }
+    }
+    if (!r || !r.ok) {
+      const status = r?.status ?? 0
+      const overloaded = status === 503 || status === 429
+      return res.status(502).json({
+        error: overloaded
+          ? 'The AI service is busy right now. Please try again in a moment.'
+          : `AI provider error: ${status} ${r?.statusText ?? ''} ${lastDetail}`,
+      })
     }
     const data = await r.json() as any
     // Gemini returns candidates[].content.parts[].text; concatenate the text parts.
