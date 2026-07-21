@@ -44,6 +44,12 @@ export function Assessments({ token }: { token: string }) {
     onError: (e: any) => toast.error(String(e?.message || 'Create failed')),
   })
 
+  const del = useMutation({
+    mutationFn: (id: string) => api.deleteAssessment(token, id),
+    onSuccess: () => { toast.success('Assessment deleted'); listQ.refetch() },
+    onError: (e: any) => toast.error(String(e?.message || 'Delete failed')),
+  })
+
   const items = listQ.data?.items || []
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -122,12 +128,13 @@ export function Assessments({ token }: { token: string }) {
             <th>Due</th>
             <th>Status</th>
             <th>Progress</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {listQ.isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
-              {Array.from({ length: 6 }).map((_, j) => (
+              {Array.from({ length: 7 }).map((_, j) => (
                 <td key={j}>
                   <div style={{ height: 14, background: 'var(--bg-surface)', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
                 </td>
@@ -144,12 +151,21 @@ export function Assessments({ token }: { token: string }) {
                 <td>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
                 <td>{a.status}</td>
                 <td>{c.yes}/{c.total} Yes ({c.no} No)</td>
+                <td>
+                  <button
+                    className="btn btn--danger"
+                    onClick={() => {
+                      if (confirm(`Delete assessment "${a.name}"? This cannot be undone.`)) del.mutate((a.id || a._id)!)
+                    }}
+                    disabled={del.isPending}
+                  >Delete</button>
+                </td>
               </tr>
             )
           })}
           {items.length === 0 && (
             <tr>
-              <td colSpan={6} className="text-muted">No assessments yet</td>
+              <td colSpan={7} className="text-muted">No assessments yet</td>
             </tr>
           )}
         </tbody>

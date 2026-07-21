@@ -68,6 +68,12 @@ router.get('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) 
   res.json(serializeAudit(doc))
 }))
 
+router.delete('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
+  const deleted = await Audit.findOneAndDelete({ _id: req.params.id, userId: req.userId })
+  if (!deleted) return res.status(404).json({ error: 'Not found' })
+  res.status(204).send()
+}))
+
 router.put('/:id', authMiddleware, asyncHandler(async (req: AuthedRequest, res) => {
   const parsed = auditSchema.partial().safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })

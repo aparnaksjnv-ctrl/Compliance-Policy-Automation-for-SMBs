@@ -313,6 +313,12 @@ export const api = {
       return m.createAudit(payload)
     }
   },
+  async deleteAudit(token: string, id: string) {
+    return fetch(BASE + `/audits/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).then(res => {
+      if (!res.ok) throw new Error('Failed to delete')
+      return true
+    })
+  },
   async updateAudit(token: string, id: string, payload: Partial<Omit<Audit, 'id' | '_id'>>) {
     try {
       return await request<{ id: string }>(`/audits/${id}`, {
@@ -364,6 +370,12 @@ export const api = {
   },
   async updateAssessment(token: string, id: string, payload: Partial<Omit<Assessment, 'id' | '_id'>>) {
     return request<{ id: string }>(`/assessments/${id}`, { method: 'PUT', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })
+  },
+  async deleteAssessment(token: string, id: string) {
+    return fetch(BASE + `/assessments/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).then(res => {
+      if (!res.ok) throw new Error('Failed to delete')
+      return true
+    })
   },
   async addAssessmentItem(token: string, id: string, payload: { text: string; category?: string; severity: RiskSeverity }) {
     return request<{ id: string }>(`/assessments/${id}/items`, { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } })

@@ -42,6 +42,12 @@ export function Audits({ token }: { token: string }) {
     onError: (e: any) => toast.error(String(e?.message || 'Create failed')),
   })
 
+  const del = useMutation({
+    mutationFn: (id: string) => api.deleteAudit(token, id),
+    onSuccess: () => { toast.success('Audit deleted'); refetch() },
+    onError: (e: any) => toast.error(String(e?.message || 'Delete failed')),
+  })
+
   const items = data?.items || []
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -102,12 +108,13 @@ export function Audits({ token }: { token: string }) {
             <th>Due</th>
             <th>Status</th>
             <th>Open findings</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {isFetching && items.length === 0 && [0,1,2].map(i => (
             <tr key={`sk-${i}`}>
-              {Array.from({ length: 5 }).map((_, j) => (
+              {Array.from({ length: 6 }).map((_, j) => (
                 <td key={j}>
                   <div style={{ height: 14, background: 'var(--bg-surface)', borderRadius: 6, opacity: 0.6, width: j===0? '60%': '30%' }} />
                 </td>
@@ -121,11 +128,20 @@ export function Audits({ token }: { token: string }) {
               <td>{a.dueDate ? new Date(a.dueDate).toLocaleDateString() : '-'}</td>
               <td>{a.status}</td>
               <td>{openCount(a)}</td>
+              <td>
+                <button
+                  className="btn btn--danger"
+                  onClick={() => {
+                    if (confirm(`Delete audit "${a.name}"? This cannot be undone.`)) del.mutate((a.id || a._id)!)
+                  }}
+                  disabled={del.isPending}
+                >Delete</button>
+              </td>
             </tr>
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={5} className="text-muted">No audits yet</td>
+              <td colSpan={6} className="text-muted">No audits yet</td>
             </tr>
           )}
         </tbody>
